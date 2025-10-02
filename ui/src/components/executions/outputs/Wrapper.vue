@@ -354,6 +354,25 @@
                 };
             }
 
+            // For arrays with multiple elements, we want to preserve the array structure
+            // This fixes arrays like toolExecutions which should be displayed as Array<Map<String, Object>>
+            if (Array.isArray(value) && value.length > 1) {
+                return {
+                    label: key,
+                    value: key, // Use key as value to make it clickable
+                    children: value.map((item, index) => {
+                        const itemPath = `${currentPath}[${index}]`;
+                        return {
+                            label: `${index}`,
+                            value: isObject ? index : item,
+                            children: typeof item === "object" && item !== null ? transform(item, false, itemPath) : [],
+                            path: itemPath,
+                        };
+                    }),
+                    path: currentPath,
+                };
+            }
+
             return {
                 label: key,
                 value: isObject && !Array.isArray(value) ? key : value,
