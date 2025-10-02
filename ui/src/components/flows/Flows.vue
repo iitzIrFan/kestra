@@ -46,7 +46,10 @@
                         prefix="flows"
                         :language="FlowFilterLanguage"
                         :buttons="{
-                            refresh: {shown: false},
+                            refresh: {
+                                shown: true,
+                                callback: refreshExecutionStatuses
+                            },
                             settings: {shown: false}
                         }"
                         :properties="{
@@ -194,7 +197,12 @@
                                         v-if="lastExecutionByFlowReady && getLastExecution(scope.row)?.status"
                                         class="d-flex justify-content-between align-items-center"
                                     >
-                                        <Status :status="getLastExecution(scope.row)?.status" size="small" />
+                                        <!-- Use a counter-based key for more efficient reactivity -->
+                                        <Status 
+                                            :key="`flow-status-${scope.row.id}-${scope.row.namespace}-${statusUpdateCounter.value}`"
+                                            :status="getLastExecution(scope.row)?.status" 
+                                            size="small" 
+                                        />
                                     </div>
                                 </template>
                             </el-table-column>
@@ -252,7 +260,7 @@
 
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch, useTemplateRef} from "vue";
+    import {ref, computed, onMounted, onUnmounted, watch, useTemplateRef} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useI18n} from "vue-i18n";
     import {useExecutionsStore} from "../../stores/executions";
@@ -321,6 +329,25 @@
     const internalPageNumber = ref(1);
     const lastExecutionByFlowReady = ref(false);
     const latestExecutions = ref<any[]>([]);
+    const statusUpdateCounter = ref(0); // Counter to force Status component update
+    
+    // Cache last executions to improve performance
+    const flowExecutionsMap = computed(() => {
+        if (!latestExecutions.value) return new Map();
+        
+        const map = new Map();
+        latestExecutions.value.forEach((execution: any) => {
+            if (execution && execution.flowId && execution.namespace) {
+                const key = `${execution.namespace}/${execution.flowId}`;
+                if (!map.has(key)) {
+                    map.set(key, []);
+                }
+                map.get(key).push(execution);
+            }
+        });
+        
+        return map;
+    });
 
     const optionalColumns: {
         label: string;
@@ -535,11 +562,65 @@
         }
     }
 
+    // Enhanced cached function for getting the most relevant execution for a flow
+    // with better error handling and memoization
     function getLastExecution(row: any) {
-        if (!latestExecutions.value || !row) return null;
-        return latestExecutions.value.find(
-            (e: any) => e.flowId === row.id && e.namespace === row.namespace
-        ) ?? null;
+        // Check for valid inputs
+        if (!row || !row.id || !row.namespace) return null;
+        
+        try {
+            // Get executions from our cached map for better performance
+            const key = `${row.namespace}/${row.id}`;
+            const flowExecutions = flowExecutionsMap.value.get(key);
+            
+            if (!flowExecutions || flowExecutions.length === 0) return null;
+            
+            // Non-terminal states (in order of priority)
+            const priorityStates = [
+                "RUNNING",   // Active and running - highest priority
+                "KILLING",   // In process of being killed
+                "QUEUED",    // Waiting to run
+                "RETRYING",  // In process of retry
+                "PAUSED",    // Paused by user
+                "BREAKPOINT",// Stopped at breakpoint
+                "CREATED",   // Just created
+                "RESTARTED"  // Being restarted
+            ];
+            
+            // First check for any active executions in priority order
+            for (const state of priorityStates) {
+                const activeExecution = flowExecutions.find(e => e?.status === state);
+                if (activeExecution) return activeExecution;
+            }
+            
+            // Special case - if only one execution, return it directly
+            if (flowExecutions.length === 1) {
+                return flowExecutions[0];
+            }
+            
+            // If multiple terminal state executions, sort by start date (newest first)
+            // Create a defensive copy to avoid mutating original data
+            return [...flowExecutions].sort((a, b) => {
+                // Ensure we have valid dates
+                if (!a?.startDate || !b?.startDate) return 0;
+                
+                try {
+                    const dateA = new Date(a.startDate).getTime();
+                    const dateB = new Date(b.startDate).getTime();
+                    
+                    // Check for invalid dates (NaN)
+                    if (isNaN(dateA) || isNaN(dateB)) return 0;
+                    
+                    return dateB - dateA; // Most recent first
+                } catch (error) {
+                    console.warn("Date comparison error:", error);
+                    return 0;
+                }
+            })[0];
+        } catch (error) {
+            console.error("Error getting last execution:", error);
+            return null;
+        }
     }
 
     function loadQuery(base?: any) {
@@ -583,16 +664,232 @@
         return MAPPED_CHARTS;
     }
 
-    // Lifecycle
+    // Track active/pending requests to avoid race conditions
+    const activeRefreshRequest = ref<boolean>(false);
+    
+    // Refresh timer for execution statuses
+    let statusRefreshTimer: number | undefined = undefined;
+    
+    // Function to refresh execution statuses with improved reliability
+    function refreshExecutionStatuses() {
+        // If component is being unmounted or there's an active request, skip this refresh
+        if (activeRefreshRequest.value || !ready.value) {
+            // Skip this refresh cycle silently
+            return;
+        }
+        
+        // Check if we have the necessary permissions and data
+        if (!user.value?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.READ) || 
+            !flowStore.flows || 
+            flowStore.flows.length === 0) {
+            return;
+        }
+        
+        // Set the flag to indicate we're making a request
+        activeRefreshRequest.value = true;
+        
+        // Extract unique namespace-flow ID combinations to avoid duplicates
+        const flowFilters = flowStore.flows.map((flow: any) => ({
+            id: flow.id, 
+            namespace: flow.namespace
+        }));
+        
+        // Start execution status refresh
+        
+        // First, get the latest executions
+        executionsStore.loadLatestExecutions({
+            flowFilters: flowFilters
+        }).then((latestExecs: any) => {
+            // Store these executions
+            if (latestExecs) {
+                latestExecutions.value = latestExecs;
+                lastExecutionByFlowReady.value = true;
+            }
+            
+            // Then, query for active executions (non-terminal states)
+            return executionsStore.findExecutions({
+                commit: false,
+                size: 100,
+                filters: JSON.stringify([
+                    {
+                        key: "state.current", 
+                        operator: "IN",
+                        value: ["RUNNING", "QUEUED", "CREATED", "RESTARTED", "KILLING", "PAUSED", "RETRYING", "BREAKPOINT"]
+                    }
+                ])
+            });
+        }).then((activeExecs: any) => {
+            // If we have active executions, prioritize them in our list
+            if (activeExecs?.results?.length > 0 && latestExecutions.value) {
+                // Build the combined execution list by merging latest and active executions
+                const combinedExecutions: any[] = [];
+                
+                // Create an index for fast lookups
+                const executionsByKey = new Map();
+                
+                // Process both latest and active executions
+                if (latestExecutions.value?.length > 0) {
+                    latestExecutions.value.forEach((exec: any) => {
+                        if (exec && exec.flowId && exec.namespace) {
+                            const key = `${exec.namespace}/${exec.flowId}`;
+                            if (!executionsByKey.has(key)) {
+                                executionsByKey.set(key, []);
+                            }
+                            executionsByKey.get(key).push(exec);
+                            combinedExecutions.push(exec);
+                        }
+                    });
+                }
+                
+                // Process active executions, potentially adding them or updating existing ones
+                activeExecs.results.forEach((activeExec: any) => {
+                    if (activeExec && activeExec.flowId && activeExec.namespace) {
+                        const key = `${activeExec.namespace}/${activeExec.flowId}`;
+                        
+                        // Create a structured execution object
+                        const executionObj = {
+                            id: activeExec.id,
+                            flowId: activeExec.flowId,
+                            namespace: activeExec.namespace,
+                            startDate: activeExec.state.startDate,
+                            status: activeExec.state.current
+                        };
+                        
+                        // Add to our lookup map
+                        if (!executionsByKey.has(key)) {
+                            executionsByKey.set(key, []);
+                        }
+                        executionsByKey.get(key).push(executionObj);
+                        
+                        // Also add to combined list
+                        combinedExecutions.push(executionObj);
+                    }
+                });
+                
+                // Update our reference with the combined results
+                latestExecutions.value = combinedExecutions;
+            }
+            
+            // Increment the counter to force Status components to update
+            // Use setTimeout to ensure Vue's reactivity has a chance to process the data changes first
+            setTimeout(() => {
+                statusUpdateCounter.value++;
+            }, 0);
+            
+            return true;
+        }).catch(error => {
+            console.error("Error refreshing execution statuses:", error);
+        }).finally(() => {
+            // Always clear the flag when done
+            activeRefreshRequest.value = false;
+        });
+    }
+    
+    // Start status refresh timer with a more reliable interval management
+    function startStatusRefresh() {
+        // Always ensure we stop any existing timers first for safety
+        stopStatusRefresh();
+        
+        // Set ready state to true to allow refresh operations
+        ready.value = true;
+        
+        // Load initial data right away
+        refreshExecutionStatuses();
+        
+        // Set up the interval timer - using 5 seconds to be less resource-intensive
+        statusRefreshTimer = window.setInterval(() => {
+            if (document.visibilityState === "visible") {
+                refreshExecutionStatuses();
+            }
+        }, 5000);
+        
+        // Add visibility change listener to pause/resume refreshes based on tab visibility
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+    }
+    
+    // Handle visibility changes to pause refreshes when tab is not visible
+    function handleVisibilityChange() {
+        if (document.visibilityState === "visible" && ready.value) {
+            // When tab becomes visible again, refresh immediately
+            refreshExecutionStatuses();
+        }
+    }
+    
+    // Stop status refresh timer with improved cleanup
+    function stopStatusRefresh() {
+        // Clear the interval timer
+        if (statusRefreshTimer !== undefined) {
+            window.clearInterval(statusRefreshTimer);
+            statusRefreshTimer = undefined;
+        }
+        
+        // Remove the visibility change listener
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        
+        // Mark component as not ready for refresh
+        ready.value = false;
+    }
+    
+    // Lifecycle with improved component management
     onMounted(() => {
+        
+        // Reset state
+        latestExecutions.value = [];
+        lastExecutionByFlowReady.value = false;
+        activeRefreshRequest.value = false;
+        statusUpdateCounter.value = 0;
+        
+        // Load display columns
         displayColumns.value = loadDisplayColumns();
+        
+        // Load data and start refresh
         loadData(() => {
-            ready.value = true;
+            // Start automatically refreshing execution statuses
+            startStatusRefresh();
         });
     });
+    
+    // Clean up when component is unmounted
+    onUnmounted(() => {
+        
+        // Always stop the refresh timer and clean up event listeners
+        stopStatusRefresh();
+        
+        // Clear execution data to prevent stale data on remount
+        latestExecutions.value = [];
+        lastExecutionByFlowReady.value = false;
+    });
 
+    // Watch for route changes to handle navigation properly
+    watch(() => route.fullPath, async (newPath, oldPath) => {
+        // Handle navigation between views
+        
+        // If navigating away from Flows view, clean up
+        if (!newPath.includes("/flows") && oldPath.includes("/flows")) {
+            stopStatusRefresh();
+        }
+        
+        // If navigating to Flows view, restart refresh
+        if (newPath.includes("/flows") && !oldPath.includes("/flows")) {
+            startStatusRefresh();
+        }
+    });
+    
+    // Watch for route.query changes to handle filtering and searching
     watch(() => route.query, async () => {
-        await loadData(() => {});
+        // Route query changed, reload data
+        // Stop the refresh timer while we reload data
+        stopStatusRefresh();
+        
+        // Reset state
+        latestExecutions.value = [];
+        lastExecutionByFlowReady.value = false;
+        
+        // Reload data and restart refresh
+        await loadData(() => {
+            // Restart refresh after data is loaded
+            startStatusRefresh();
+        });
     }, {deep: true});
 
     watch(route, (newRoute) => {
