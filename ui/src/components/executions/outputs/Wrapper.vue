@@ -341,42 +341,46 @@
         const result = Object.keys(o).map((key) => {
             const value = o[key];
             const isObject = typeof value === "object" && value !== null;
-
             const currentPath = `${path}["${key}"]`;
 
-            // If the value is an array with exactly one element, use that element as the value
-            if (Array.isArray(value) && value.length === 1) {
+            // Properly handle arrays by expanding each index as a child node
+            if (Array.isArray(value)) {
+                const children = value.map((elem, idx) => {
+                    const elemIsObj = typeof elem === "object" && elem !== null;
+                    const elemPath = `${currentPath}[${idx}]`;
+
+                    return {
+                        label: `[${idx}]`,
+                        // For objects/arrays, use index as label; for primitives, show the value
+                        value: elemIsObj ? `[${idx}]` : elem,
+                        children: elemIsObj ? transform(elem, false, elemPath) : [],
+                        path: elemPath,
+                    };
+                });
+
                 return {
                     label: key,
-                    value: value[0],
-                    children: [],
+                    value: key, // Use key as value for clickable navigation
+                    children,
                     path: currentPath,
                 };
             }
 
-            // For arrays with multiple elements, we want to preserve the array structure
-            // This fixes arrays like toolExecutions which should be displayed as Array<Map<String, Object>>
-            if (Array.isArray(value) && value.length > 1) {
+            // Objects: recurse to build children
+            if (isObject) {
                 return {
                     label: key,
-                    value: key, // Use key as value to make it clickable
-                    children: value.map((item, index) => {
-                        const itemPath = `${currentPath}[${index}]`;
-                        return {
-                            label: `${index}`,
-                            value: isObject ? index : item,
-                            children: typeof item === "object" && item !== null ? transform(item, false, itemPath) : [],
-                            path: itemPath,
-                        };
-                    }),
+                    value: key, // Use key as value for clickable navigation
+                    children: transform(value, false, currentPath),
                     path: currentPath,
                 };
             }
 
+            // Primitives: leaf node with direct value
             return {
                 label: key,
-                value: isObject && !Array.isArray(value) ? key : value,
-                children: isObject ? transform(value, false, currentPath) : [],
+                value: value,
+                children: [],
                 path: currentPath,
             };
         });
