@@ -269,9 +269,11 @@
 
     const processedValue = (data) => {
         const regular = false;
+        const value = data.value;
+        const path = data.path || "";
 
-        if (!data.value && !data.children?.length) {
-            return {label: data.value, regular};
+        if (!value && !data.children?.length) {
+            return {label: value, regular};
         } else if (data?.children?.length) {
             const message = (length) => ({label: `${length} items`, regular});
             const length = data.children.length;
@@ -282,21 +284,44 @@
         }
 
         // Check if the value is a valid URL and not an internal "kestra:///" link
-        if (isValidURL(data.value)) {
-            return data.value.startsWith("kestra:///")
+        if (isValidURL(value)) {
+            return value.startsWith("kestra:///")
                 ? {label: "Internal link", regular}
                 : {label: "External link", regular};
         }
-
-        // Check if the value is an array of objects
-        if (Array.isArray(data.value) && data.value.every(item => typeof item === "object" && item !== null)) {
+        
+        // Special case for toolExecutions arrays
+        if (Array.isArray(value) && path.includes("toolExecutions")) {
             return {
-                label: `${data.value.length} objects`,
+                label: `${value.length} object${value.length > 1 ? "s" : ""}`,
                 regular,
             };
         }
-
-        return {label: trim(data.value), regular: true};
+        
+        // Handle arrays of objects
+        if (Array.isArray(value)) {
+            if (value.every((item) => typeof item === "object" && item !== null)) {
+                return {
+                    label: `${value.length} object${value.length > 1 ? "s" : ""}`,
+                    regular,
+                };
+            }
+            return {
+                label: `${value.length} item${value.length > 1 ? "s" : ""}`,
+                regular,
+            };
+        }
+        
+        // Handle objects
+        if (typeof value === "object" && value !== null) {
+            return {
+                label: "Object",
+                regular,
+            };
+        }
+        
+        // Default for strings and other primitive types
+        return {label: trim(value), regular: true};
     };
 
     const expandedValue = ref("");
@@ -345,11 +370,52 @@
         return {label, value};
     };
 
-    const transform = (o, isFirstPass, path = "") => {
-        const result = Object.keys(o).map((key) => {
-            const value = o[key];
-            const isObject = typeof value === "object" && value !== null;
+    const transform = (o: any, isFirstPass: boolean, path = ""): any[] => {
+        // Special handling for toolExecutions
+        if (path.endsWith("[\"toolExecutions\"]") && Array.isArray(o)) {
+            o = o.map(item => {
+                const newItem = {...item};
 
+                // Parse result if it's JSON string
+                if (typeof newItem.result === "string") {
+                    try {
+                        const parsed = JSON.parse(newItem.result);
+                        newItem.result = parsed;
+                    } catch {
+                        // leave as string if parsing fails
+                    }
+                }
+
+                // Parse requestArguments if it's JSON string
+                if (typeof newItem.requestArguments === "string") {
+                    try {
+                        const parsed = JSON.parse(newItem.requestArguments);
+                        newItem.requestArguments = parsed;
+                    } catch {
+                        // leave as string if parsing fails
+                    }
+                }
+
+                return newItem;
+            });
+        }
+
+        const result = Object.keys(o).map((key) => {
+            let value = o[key];
+
+            // Try parsing any other stringified JSON
+            if (typeof value === "string") {
+                try {
+                    const parsed = JSON.parse(value);
+                    if (typeof parsed === "object" && parsed !== null) {
+                        value = parsed;
+                    }
+                } catch {
+                    // not JSON, keep original
+                }
+            }
+
+            const isObject = typeof value === "object" && value !== null;
             const currentPath = `${path}["${key}"]`;
 
             // If the value is an array with exactly one element, use that element as the value
@@ -364,21 +430,20 @@
 
             return {
                 label: key,
-                value: isObject && !Array.isArray(value) ? key : value,
+                value,
                 children: isObject ? transform(value, false, currentPath) : [],
                 path: currentPath,
             };
         });
 
         if (isFirstPass) {
-            const OUTPUTS = {
+            result.unshift({
                 label: t("outputs"),
                 heading: true,
                 component: shallowRef(TextBoxSearchOutline),
                 isFirstPass: true,
-                path: path,
-            };
-            result.unshift(OUTPUTS);
+                path,
+            });
         }
 
         return result;
