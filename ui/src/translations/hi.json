@@ -790,9 +790,12 @@
     "namespace and id readonly": "गुण `namespace` और `id` को बदला नहीं जा सकता — वे अब अपनी प्रारंभिक मानों पर सेट हैं। यदि आप किसी flow का नाम बदलना चाहते हैं या उसका namespace बदलना चाहते हैं, तो आप एक नया flow बना सकते हैं और पुराने को हटा सकते हैं।",
     "namespace files": {
       "create": {
-        "already_exists": "इस नाम की एक फ़ाइल पहले से मौजूद है",
         "file": "फ़ाइल बनाएँ",
+        "file_already_exists": "A file with this name already exists",
+        "file_error": "Error occurred while creating the file",
         "folder": "फ़ोल्डर बनाएँ",
+        "folder_already_exists": "A folder with this name already exists",
+        "folder_error": "Error occurred while creating the folder",
         "label": "बनाएँ"
       },
       "delete": {

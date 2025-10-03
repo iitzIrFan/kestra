@@ -790,9 +790,12 @@
     "namespace and id readonly": "Le namespace et l'id ne sont pas modifiables. Ils ont été réinitialisés à leur valeur initiale.",
     "namespace files": {
       "create": {
-        "already_exists": "Un fichier avec ce nom existe déjà",
         "file": "Créer un fichier",
+        "file_already_exists": "A file with this name already exists",
+        "file_error": "Error occurred while creating the file",
         "folder": "Créer un dossier",
+        "folder_already_exists": "A folder with this name already exists",
+        "folder_error": "Error occurred while creating the folder",
         "label": "Créer"
       },
       "delete": {
