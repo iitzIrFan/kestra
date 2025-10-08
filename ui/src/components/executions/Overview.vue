@@ -59,7 +59,20 @@
             <el-alert type="info" :closable="false" class="mb-4 main-info">
                 <template #title>
                     <div>
-                        <span v-html="$t('execution replay', {originalId: execution?.originalId})" />
+                        {{ $t("This execution is a replay of") }}
+                        <router-link
+                            :to="{
+                                name: 'executions/update',
+                                params: {
+                                    namespace: execution.namespace,
+                                    flowId: execution.flowId,
+                                    id: execution.originalId,
+                                    tenant: execution.tenantId
+                                }
+                            }"
+                        >
+                            <code class="parent-execution">{{ execution.originalId }}</code>
+                        </router-link>
                     </div>
                 </template>
             </el-alert>
@@ -638,5 +651,12 @@
 
 code.parent-execution {
     color: var(--ks-content-link);
+    text-decoration: none;
+    transition: text-decoration 0.2s ease;
+
+    &:hover {
+        text-decoration: underline;
+        text-decoration-color: white;
+    }
 }
 </style>
