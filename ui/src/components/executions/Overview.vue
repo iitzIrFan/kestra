@@ -104,7 +104,7 @@
                             params: scope.row.link
                         }"
                     >
-                        <code class="parent-execution">{{ scope.row.value }}</code>
+                        <Id :value="scope.row.value " :shrink="false" />
                     </router-link>
                     <span v-else-if="scope.row.date">
                         <DateAgo :date="scope.row.value" />
@@ -650,5 +650,9 @@
         padding: .5rem;
         border-top: 1px solid var(--ks-log-background-error);
     }
+}
+
+code.parent-execution {
+    color: var(--ks-content-link);
 }
 </style>
