@@ -72,7 +72,7 @@
     import TimeSelect from "./TimeSelect.vue";
     import type momentType from "moment";
 
-    type FilterValue = {
+    interface FilterValue = {
         startDate?: string;
         endDate?: string;
         timeRange?: string;
