@@ -59,19 +59,19 @@
             <el-alert type="info" :closable="false" class="mb-4 main-info">
                 <template #title>
                     <div>
-                        {{ $t("This execution is a replay of") }}
+                        {{ $t("execution replay") }}
                         <router-link
                             :to="{
                                 name: 'executions/update',
                                 params: {
+                                    tenant: execution.tenantId,
                                     namespace: execution.namespace,
                                     flowId: execution.flowId,
                                     id: execution.originalId,
-                                    tenant: execution.tenantId
                                 }
                             }"
                         >
-                            <code class="parent-execution">{{ execution.originalId }}</code>
+                            <Id :value="execution.originalId " :shrink="false" />
                         </router-link>
                     </div>
                 </template>
@@ -202,6 +202,7 @@
         </div>
     </div>
 </template>
+
 <script>
     import Status from "../Status.vue";
     import SetLabels from "./SetLabels.vue";
@@ -229,6 +230,7 @@
     import Markdown from "../../components/layout/Markdown.vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
+    import Id from "../Id.vue";
 
     export default {
         inheritAttrs: false,
@@ -254,7 +256,8 @@
             ChevronUp,
             ChevronLeft,
             ChevronRight,
-            Markdown
+            Markdown,
+            Id
         },
         emits: ["follow"],
         methods: {
