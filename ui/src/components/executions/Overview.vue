@@ -651,8 +651,4 @@
         border-top: 1px solid var(--ks-log-background-error);
     }
 }
-
-code.parent-execution {
-    color: var(--ks-content-link);
-}
 </style>
