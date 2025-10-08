@@ -651,15 +651,4 @@
         border-top: 1px solid var(--ks-log-background-error);
     }
 }
-
-code.parent-execution {
-    color: var(--ks-content-link);
-    text-decoration: none;
-    transition: text-decoration 0.2s ease;
-
-    &:hover {
-        text-decoration: underline;
-        text-decoration-color: white;
-    }
-}
 </style>
