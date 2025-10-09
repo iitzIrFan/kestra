@@ -291,14 +291,19 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
 
-        async updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean} & Record<string, any>) | undefined) {
+        async updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean, isDocumentationRequest?: boolean} & Record<string, any>) | undefined) {
             if (!pluginElement?.type || !this.allTypes.includes(pluginElement.type)) {
                 this.editorPlugin = undefined;
                 this.currentlyLoading = undefined;
                 return;
             }
 
-            const {type, version, forceRefresh = false} = pluginElement;
+            const {type, version, forceRefresh = false, isDocumentationRequest = false} = pluginElement;
+            
+            // If this is just a documentation request and we already have the documentation loaded, don't reload
+            if (isDocumentationRequest && this.editorPlugin?.cls === type && !forceRefresh) {
+                return;
+            }
 
             // Avoid rerunning the same request twice in a row
             if (this.currentlyLoading?.type === type &&
