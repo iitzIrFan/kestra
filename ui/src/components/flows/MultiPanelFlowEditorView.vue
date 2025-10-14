@@ -45,10 +45,6 @@
     import MultiPanelGenericEditorView from "../MultiPanelGenericEditorView.vue";
 
     function isTabFlowRelated(element: Tab){
-        // Skip marking doc tab as dirty to avoid unsaved changes warning when viewing documentation
-        if (element.value === "doc") {
-            return false;
-        }
         return ["code", "nocode", "topology"].includes(element.value)
             // when the flow file is dirty all the nocode tabs get splashed
             || element.value.startsWith("nocode-")
