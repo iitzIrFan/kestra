@@ -301,6 +301,10 @@ export const usePluginsStore = defineStore("plugins", {
             const {type, version, forceRefresh = false, isDocumentationRequest = false} = pluginElement;
             
             // If this is just a documentation request and we already have the documentation loaded, don't reload
+            // Other kinds of requests could include:
+            // - Plugin updates: Refreshing the plugin data when a new version is available.
+            // - Force refresh: Reloading the documentation even if it's already loaded, triggered by user action.
+            // - Initial load: Loading the documentation for the first time when the plugin is selected.
             if (isDocumentationRequest && this.editorPlugin?.cls === type && !forceRefresh) {
                 return;
             }
