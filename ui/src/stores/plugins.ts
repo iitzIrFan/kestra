@@ -291,23 +291,14 @@ export const usePluginsStore = defineStore("plugins", {
         },
 
 
-        async updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean, isDocumentationRequest?: boolean} & Record<string, any>) | undefined) {
+        async updateDocumentation(pluginElement?: ({type: string, version?: string, forceRefresh?: boolean} & Record<string, any>) | undefined) {
             if (!pluginElement?.type || !this.allTypes.includes(pluginElement.type)) {
                 this.editorPlugin = undefined;
                 this.currentlyLoading = undefined;
                 return;
             }
 
-            const {type, version, forceRefresh = false, isDocumentationRequest = false} = pluginElement;
-            
-            // If this is just a documentation request and we already have the documentation loaded, don't reload
-            // Other kinds of requests could include:
-            // - Plugin updates: Refreshing the plugin data when a new version is available.
-            // - Force refresh: Reloading the documentation even if it's already loaded, triggered by user action.
-            // - Initial load: Loading the documentation for the first time when the plugin is selected.
-            if (isDocumentationRequest && this.editorPlugin?.cls === type && !forceRefresh) {
-                return;
-            }
+            const {type, version, forceRefresh = false} = pluginElement;
 
             // Avoid rerunning the same request twice in a row
             if (this.currentlyLoading?.type === type &&
