@@ -9,7 +9,7 @@
             :lang="extension === undefined ? 'yaml' : undefined"
             :extension="extension"
             :navbar="false"
-            :readOnly="isReadOnly"
+            :readOnly="!namespaceFiles && flowStore.isReadOnly"
             :creating="isCreating"
             :path="props.path"
             :diffOverviewBar="false"
@@ -155,8 +155,7 @@
 
     const namespace = computed(() => flowStore.flow?.namespace);
     const isCreating = computed(() => flowStore.isCreating);
-    const isCurrentTabFlow = computed(() => props.flow)
-    const isReadOnly = computed(() => flowStore.flow?.deleted || !flowStore.isAllowedEdit || flowStore.readOnlySystemLabel);
+    const isCurrentTabFlow = computed(() => props.flow);
 
     const timeout = ref<any>(null);
     const hash = ref<any>(null);
