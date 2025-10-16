@@ -46,80 +46,93 @@
     </section>
 </template>
 
-<script>
-    import {mapStores} from "pinia";
+<script setup lang="ts">
+    import {ref, computed} from "vue";
+    import {useRoute, useRouter, LocationQueryRaw} from "vue-router";
+    import {useI18n} from "vue-i18n";
     import {useFlowStore} from "../../stores/flow";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
-    import RouteContext from "../../mixins/routeContext";
-    import DataTableActions from "../../mixins/dataTableActions";
-    import RestoreUrl from "../../mixins/restoreUrl";
+    import {useDataTableActions} from "../../composables/useDataTableActions";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
     import DataTable from "../layout/DataTable.vue";
     import SearchField from "../layout/SearchField.vue";
     import NoData from "../layout/NoData.vue";
-    import _escape from "lodash/escape"
+    import _escape from "lodash/escape";
     import _merge from "lodash/merge";
     import TopNavBar from "../layout/TopNavBar.vue";
 
-    export default {
-        mixins: [RouteContext, RestoreUrl, DataTableActions],
-        components: {
-            NamespaceSelect,
-            DataTable,
-            SearchField,
-            TopNavBar,
-            NoData
-        },
-        data() {
-            return {
-                isDefaultNamespaceAllow: true
-            };
-        },
-        computed: {
-            ...mapStores(useFlowStore),
-            routeInfo() {
-                return {
-                    title: this.$t("source search"),
-                    breadcrumb: [
-                        {
-                            label: this.$t("flows"),
-                            link: {
-                                name: "flows/list",
-                            }
-                        },
-                    ]
-                };
-            }
-        },
-        methods: {
-            sanitize(content) {
-                return _escape(content)
-                    .replaceAll("[mark]", "<mark>")
-                    .replaceAll("[/mark]", "</mark>")
-            },
-            loadQuery(base) {
-                let queryFilter = this.queryWithFilter();
+    // Types
+    interface QueryBase {
+        size?: number;
+        page?: number;
+        sort?: string;
+    }
 
-                return _merge(base, queryFilter)
-            },
-            loadData(callback) {
-                if (this.$route.query["q"] !== undefined) {
-                    this.flowStore
-                        .searchFlows(this.loadQuery({
-                            size: parseInt(this.$route.query.size || 25),
-                            page: parseInt(this.$route.query.page || 1),
-                            sort: this.$route.query.sort
-                        }))
-                        .finally(() => {
-                            this.saveRestoreUrl();
-                        })
-                        .finally(callback)
-                } else {
-                    this.flowStore.total = 0;
-                    this.flowStore.search = undefined;
-                    callback();
+    // Initialize composables
+    const route = useRoute();
+    const router = useRouter();
+    const {t} = useI18n();
+    const flowStore = useFlowStore();
+    const {queryWithFilter} = useDataTableActions();
+    const {saveRestoreUrl} = useRestoreUrl();
+
+    // Data
+    const ready = ref(true);
+    const dataTable = ref<InstanceType<typeof DataTable> | null>(null);
+
+    // Computed
+    const routeInfo = computed(() => ({
+        title: t("source search"),
+        breadcrumb: [
+            {
+                label: t("flows"),
+                link: {
+                    name: "flows/list",
                 }
+            },
+        ]
+    }));
 
-            }
+    // Methods
+    const sanitize = (content: string): string => {
+        return _escape(content)
+            .replaceAll("[mark]", "<mark>")
+            .replaceAll("[/mark]", "</mark>");
+    };
+
+    const loadQuery = (base: QueryBase) => {
+        const queryFilter = queryWithFilter();
+        return _merge(base, queryFilter);
+    };
+
+    const loadData = (callback: () => void): void => {
+        if (route.query.q !== undefined) {
+            flowStore
+                .searchFlows(loadQuery({
+                    size: parseInt(String(route.query.size) || "25"),
+                    page: parseInt(String(route.query.page) || "1"),
+                    sort: String(route.query.sort || "")
+                }))
+                .finally(() => {
+                    saveRestoreUrl();
+                    callback();
+                });
+        } else {
+            flowStore.total = 0;
+            flowStore.search = undefined;
+            callback();
         }
+    };
+
+    const onPageChanged = (): void => {
+        loadData(() => {});
+    };
+
+    const onDataTableValue = (field: string, value: string | number | boolean): void => {
+        const query: LocationQueryRaw = {
+            ...route.query,
+            [field]: value.toString()
+        };
+        router.push({query});
     };
 </script>
