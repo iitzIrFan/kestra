@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Arrays;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -17,8 +18,8 @@ class FileInputTest {
     @Test
     void shouldGetExtensionWhenFindingFileExtensionForExistingFile() {
         final List<Input<?>> inputs = List.of(
-            FileInput.builder().id("test-file1").extension(".zip").build(),
-            FileInput.builder().id("test-file2").extension(".gz").build()
+            FileInput.builder().id("test-file1").acceptedExtensions(List.of(".zip")).build(),
+            FileInput.builder().id("test-file2").acceptedExtensions(List.of(".gz")).build()
         );
 
         final String result = FileInput.findFileInputExtension(inputs, "test-file1");
@@ -28,8 +29,8 @@ class FileInputTest {
     @Test
     void shouldReturnDefaultExtensionWhenFindingExtensionForUnknownFile() {
         final List<Input<?>> inputs = List.of(
-            FileInput.builder().id("test-file1").extension(".zip").build(),
-            FileInput.builder().id("test-file2").extension(".gz").build()
+            FileInput.builder().id("test-file1").acceptedExtensions(List.of(".zip")).build(),
+            FileInput.builder().id("test-file2").acceptedExtensions(List.of(".gz")).build()
         );
 
         final String result = FileInput.findFileInputExtension(inputs, "???");
@@ -40,7 +41,7 @@ class FileInputTest {
     void validateValidFileTypes() {
         final FileInput csvInput = FileInput.builder()
             .id("csvFile")
-            .accept(".csv")
+            .acceptedExtensions(List.of(".csv"))
             .build();
 
         // Test valid CSV file
@@ -50,7 +51,7 @@ class FileInputTest {
         // Test multiple extensions
         final FileInput docInput = FileInput.builder()
             .id("docFile")
-            .accept(".doc,.docx,.pdf")
+            .acceptedExtensions(List.of(".doc", ".docx", ".pdf"))
             .build();
 
         assertDoesNotThrow(() -> docInput.validate(URI.create("file:///path/to/file.doc")));
@@ -62,7 +63,7 @@ class FileInputTest {
     void validateInvalidFileTypes() {
         final FileInput csvInput = FileInput.builder()
             .id("csvFile")
-            .accept(".csv")
+            .acceptedExtensions(List.of(".csv"))
             .build();
 
         // Test invalid extension
@@ -70,54 +71,54 @@ class FileInputTest {
             ConstraintViolationException.class,
             () -> csvInput.validate(URI.create("file:///path/to/file.txt"))
         );
-        assertThat(exception.getMessage(), containsString("Accepted types: .csv"));
+        assertThat(exception.getMessage(), containsString("Accepted extensions: .csv"));
 
         // Test multiple allowed types
         final FileInput imageInput = FileInput.builder()
             .id("imageFile")
-            .accept(".jpg,.png")
+            .acceptedExtensions(List.of(".jpg", ".png"))
             .build();
 
         exception = assertThrows(
             ConstraintViolationException.class,
             () -> imageInput.validate(URI.create("file:///path/to/file.gif"))
         );
-        assertThat(exception.getMessage(), containsString("Accepted types: .jpg,.png"));
+        assertThat(exception.getMessage(), containsString("Accepted extensions: .jpg, .png"));
     }
 
     @Test
     void validateMimeTypes() {
         final FileInput textInput = FileInput.builder()
             .id("textFile")
-            .accept("text/csv,application/json")
+            .acceptedExtensions(List.of(".csv", ".json"))
             .build();
 
-        // Test valid MIME types
+        // Test valid file types
         assertDoesNotThrow(() -> textInput.validate(URI.create("file:///path/to/file.csv")));
         assertDoesNotThrow(() -> textInput.validate(URI.create("file:///path/to/file.json")));
 
-        // Test invalid MIME type
+        // Test invalid file type
         ConstraintViolationException exception = assertThrows(
             ConstraintViolationException.class,
             () -> textInput.validate(URI.create("file:///path/to/file.xml"))
         );
-        assertThat(exception.getMessage(), containsString("Accepted types: text/csv,application/json"));
+        assertThat(exception.getMessage(), containsString("Accepted extensions: .csv, .json"));
     }
 
     @Test
     void validateNullValues() {
         final FileInput csvInput = FileInput.builder()
             .id("csvFile")
-            .accept(".csv")
+            .acceptedExtensions(List.of(".csv"))
             .build();
 
         // Null input should be allowed (for optional inputs)
         assertDoesNotThrow(() -> csvInput.validate(null));
 
-        // Null accept should not enforce any validation
+        // Null extensions should not enforce any validation
         final FileInput anyInput = FileInput.builder()
             .id("anyFile")
-            .accept(null)
+            .acceptedExtensions(null)
             .build();
         assertDoesNotThrow(() -> anyInput.validate(URI.create("file:///path/to/any.file")));
     }
@@ -126,10 +127,10 @@ class FileInputTest {
     void validateEmptyAccept() {
         final FileInput anyInput = FileInput.builder()
             .id("anyFile")
-            .accept("")
+            .acceptedExtensions(List.of())
             .build();
 
-        // Empty accept should not enforce any validation
+        // Empty extensions list should not enforce any validation
         assertDoesNotThrow(() -> anyInput.validate(URI.create("file:///path/to/any.file")));
     }
 }

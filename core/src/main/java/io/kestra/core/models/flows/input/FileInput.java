@@ -25,11 +25,10 @@ public class FileInput extends Input<URI> {
     public String extension;
     
     /**
-     * The allowed file extensions or MIME types.
-     * Example: ".csv,.txt" or "text/csv,text/plain"
-     * Can contain either file extensions starting with dots (.pdf, .txt) or MIME types (text/plain)
+     * List of allowed file extensions (e.g., [".csv", ".txt", ".pdf"]).
+     * Each extension must start with a dot.
      */
-    private String accept;
+    private List<String> acceptedExtensions;
     
     /**
      * Gets the file extension from the URI's path
@@ -42,52 +41,27 @@ public class FileInput extends Input<URI> {
 
     @Override
     public void validate(URI input) throws ConstraintViolationException {
-        if (input == null || accept == null || accept.isEmpty()) {
+        if (input == null || acceptedExtensions == null || acceptedExtensions.isEmpty()) {
             return;
         }
 
         String extension = getFileExtension(input);
-        String[] allowedTypes = accept.toLowerCase().split(",");
-            
-        boolean isValid = false;
-        for (String type : allowedTypes) {
-            type = type.trim();
-            if (type.startsWith(".")) {
-                // Extension validation
-                if (extension.equals(type)) {
-                    isValid = true;
-                    break;
-                }
-            } else if (type.contains("/")) {
-                // MIME type validation
-                String fileExt = extension.substring(1); // Remove the dot
-                if ((type.equals("text/csv") && fileExt.equals("csv")) ||
-                    (type.equals("text/plain") && (fileExt.equals("txt") || fileExt.equals("text"))) ||
-                    (type.equals("application/json") && fileExt.equals("json")) ||
-                    (type.equals("text/markdown") && (fileExt.equals("md") || fileExt.equals("markdown"))) ||
-                    (type.startsWith("image/") && fileExt.equals(type.substring(6)))) {
-                    isValid = true;
-                    break;
-                }
-            }
-        }
-            
-        if (!isValid) {
+        if (!acceptedExtensions.contains(extension.toLowerCase())) {
             throw new ConstraintViolationException(
-                "File type not allowed. Accepted types: " + accept,
+                "File type not allowed. Accepted extensions: " + String.join(", ", acceptedExtensions),
                 Set.of()
             );
         }
     }
 
     public static String findFileInputExtension(@NotNull final List<Input<?>> inputs, @NotNull final String fileName) {
-        String res = inputs.stream()
+        return inputs.stream()
             .filter(in -> in instanceof FileInput)
             .filter(in -> in.getId().equals(fileName))
-            .filter(flowInput -> ((FileInput) flowInput).getExtension() != null)
-            .map(flowInput -> ((FileInput) flowInput).getExtension())
+            .map(in -> (FileInput) in)
+            .filter(fileInput -> fileInput.getAcceptedExtensions() != null && !fileInput.getAcceptedExtensions().isEmpty())
+            .map(fileInput -> fileInput.getAcceptedExtensions().get(0))
             .findFirst()
             .orElse(FileInput.DEFAULT_EXTENSION);
-        return res.startsWith(".") ? res : "." + res;
     }
 }
