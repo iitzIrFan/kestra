@@ -149,17 +149,19 @@
                 type="time"
             />
             <div class="el-input el-input-file" v-if="input.type === 'FILE'">
-                <div class="el-input__wrapper">
-                    <input
-                        :data-testid="`input-form-${input.id}`"
-                        :id="input.id+'-file'"
-                        class="el-input__inner custom-file-input"
-                        type="file"
-                        @change="onFileChange(input, $event)"
-                        autocomplete="off"
-                    >
-                    <span class="file-placeholder" v-html="getFilePlaceholder(inputsValues[input.id])" />
-                </div>
+                <input
+                    type="file"
+                    :id="`file-${input.id}`"
+                    class="custom-file-input"
+                    :accept="input.accept"
+                    @change="onFileChange(input, $event)"
+                >
+                <span class="file-placeholder" v-if="!inputsValues[input.id]">
+                    {{ $t('choose file') }}
+                </span>
+                <span class="file-placeholder" v-else>
+                    {{ inputsValues[input.id].name }}
+                </span>
             </div>
             <div
                 v-if="input.type === 'ARRAY'"
@@ -260,10 +262,11 @@
         {{ $t("no inputs") }}
     </el-alert>
 </template>
-<script setup>
+<script setup lang="ts">
     import ValidationError from "../flows/ValidationError.vue";
+    import {ElMessage} from "element-plus";
 </script>
-<script>
+<script lang="ts">
     import {toRaw} from "vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
@@ -462,7 +465,30 @@
                     return;
                 }
 
-                this.inputsValues[input.id] = files[0];
+                const file = files[0];
+                
+                if (input.accept) {
+                    const allowedTypes = input.accept.toLowerCase().split(",");
+                    const fileName = file.name.toLowerCase();
+                    const fileType = file.type.toLowerCase();
+                    
+                    const isAllowed = allowedTypes.some(type => {
+                        type = type.trim();
+                        if (type.startsWith(".")) {
+                            return fileName.endsWith(type);
+                        } else {
+                            return fileType === type;
+                        }
+                    });
+                    
+                    if (!isAllowed) {
+                        ElMessage.error(this.$t("fileTypeNotAllowed", {types: input.accept}));
+                        e.target.value = "";
+                        return;
+                    }
+                }
+
+                this.inputsValues[input.id] = file;
                 setTimeout(() => this.onChange(input), 300);
             },
             onYamlChange(input, e) {
