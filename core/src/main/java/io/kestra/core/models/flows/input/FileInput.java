@@ -58,6 +58,8 @@ public class FileInput extends Input<URI> {
         return inputs.stream()
             .filter(in -> in instanceof FileInput)
             .filter(in -> in.getId().equals(fileName))
+            .filter(flowInput -> ((FileInput) flowInput).getExtension() != null)
+            .map(flowInput -> ((FileInput) flowInput).getExtension())
             .map(in -> (FileInput) in)
             .filter(fileInput -> fileInput.getAcceptedExtensions() != null && !fileInput.getAcceptedExtensions().isEmpty())
             .map(fileInput -> fileInput.getAcceptedExtensions().get(0))

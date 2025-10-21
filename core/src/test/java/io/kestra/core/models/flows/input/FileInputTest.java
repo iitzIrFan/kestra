@@ -17,23 +17,23 @@ class FileInputTest {
 
     @Test
     void shouldGetExtensionWhenFindingFileExtensionForExistingFile() {
-        final List<Input<?>> inputs = List.of(
-            FileInput.builder().id("test-file1").acceptedExtensions(List.of(".zip")).build(),
-            FileInput.builder().id("test-file2").acceptedExtensions(List.of(".gz")).build()
+        List<Input<?>> inputs = List.of(
+            FileInput.builder().id("test-file1").extension(".zip").build(),
+            FileInput.builder().id("test-file2").extension(".gz").build()
         );
 
-        final String result = FileInput.findFileInputExtension(inputs, "test-file1");
+        String result = FileInput.findFileInputExtension(inputs, "test-file1");
         Assertions.assertEquals(".zip", result);
     }
 
     @Test
     void shouldReturnDefaultExtensionWhenFindingExtensionForUnknownFile() {
-        final List<Input<?>> inputs = List.of(
-            FileInput.builder().id("test-file1").acceptedExtensions(List.of(".zip")).build(),
-            FileInput.builder().id("test-file2").acceptedExtensions(List.of(".gz")).build()
+        List<Input<?>> inputs = List.of(
+            FileInput.builder().id("test-file1").extension(".zip").build(),
+            FileInput.builder().id("test-file2").extension(".gz").build()
         );
 
-        final String result = FileInput.findFileInputExtension(inputs, "???");
+        String result = FileInput.findFileInputExtension(inputs, "???");
         Assertions.assertEquals(".upl", result);
     }
 
