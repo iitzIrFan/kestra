@@ -153,7 +153,7 @@
                     type="file"
                     :id="`file-${input.id}`"
                     class="custom-file-input"
-                    :accept="input.acceptedExtensions?.join(',')"
+                    :accept="input.allowedFileExtensions?.join(',')"
                     @change="onFileChange(input, $event)"
                 >
                 <span class="file-placeholder" v-if="!inputsValues[input.id]">
