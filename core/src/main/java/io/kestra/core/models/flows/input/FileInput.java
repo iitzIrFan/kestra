@@ -28,7 +28,7 @@ public class FileInput extends Input<URI> {
      * List of allowed file extensions (e.g., [".csv", ".txt", ".pdf"]).
      * Each extension must start with a dot.
      */
-    private List<String> acceptedExtensions;
+    private List<String> allowedFileExtensions;
     
     /**
      * Gets the file extension from the URI's path
@@ -41,14 +41,14 @@ public class FileInput extends Input<URI> {
 
     @Override
     public void validate(URI input) throws ConstraintViolationException {
-        if (input == null || acceptedExtensions == null || acceptedExtensions.isEmpty()) {
+        if (input == null || allowedFileExtensions == null || allowedFileExtensions.isEmpty()) {
             return;
         }
 
         String extension = getFileExtension(input);
-        if (!acceptedExtensions.contains(extension.toLowerCase())) {
+        if (!allowedFileExtensions.contains(extension.toLowerCase())) {
             throw new ConstraintViolationException(
-                "File type not allowed. Accepted extensions: " + String.join(", ", acceptedExtensions),
+                "File type not allowed. Accepted extensions: " + String.join(", ", allowedFileExtensions),
                 Set.of()
             );
         }
