@@ -55,14 +55,13 @@ public class FileInput extends Input<URI> {
     }
 
     public static String findFileInputExtension(@NotNull final List<Input<?>> inputs, @NotNull final String fileName) {
-        return inputs.stream()
-            // fix 
+        String res = inputs.stream()
             .filter(in -> in instanceof FileInput)
-            .map(in -> (FileInput) in)
-            .filter(fileInput -> fileInput.getId().equals(fileName))
-            .filter(fileInput -> fileInput.getAcceptedExtensions() != null && !fileInput.getAcceptedExtensions().isEmpty())
-            .map(fileInput -> fileInput.getAcceptedExtensions().get(0))
+            .filter(in -> in.getId().equals(fileName))
+            .filter(flowInput -> ((FileInput) flowInput).getExtension() != null)
+            .map(flowInput -> ((FileInput) flowInput).getExtension())
             .findFirst()
             .orElse(FileInput.DEFAULT_EXTENSION);
+        return res.startsWith(".") ? res : "." + res;
     }
 }
