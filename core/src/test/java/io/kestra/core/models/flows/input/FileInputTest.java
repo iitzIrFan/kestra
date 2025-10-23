@@ -41,7 +41,7 @@ class FileInputTest {
     void validateValidFileTypes() {
         final FileInput csvInput = FileInput.builder()
             .id("csvFile")
-            .acceptedExtensions(List.of(".csv"))
+            .allowedFileExtensions(List.of(".csv"))
             .build();
 
         // Test valid CSV file
@@ -51,7 +51,7 @@ class FileInputTest {
         // Test multiple extensions
         final FileInput docInput = FileInput.builder()
             .id("docFile")
-            .acceptedExtensions(List.of(".doc", ".docx", ".pdf"))
+            .allowedFileExtensions(List.of(".doc", ".docx", ".pdf"))
             .build();
 
         assertDoesNotThrow(() -> docInput.validate(URI.create("file:///path/to/file.doc")));
@@ -63,7 +63,7 @@ class FileInputTest {
     void validateInvalidFileTypes() {
         final FileInput csvInput = FileInput.builder()
             .id("csvFile")
-            .acceptedExtensions(List.of(".csv"))
+            .allowedFileExtensions(List.of(".csv"))
             .build();
 
         // Test invalid extension
@@ -76,7 +76,7 @@ class FileInputTest {
         // Test multiple allowed types
         final FileInput imageInput = FileInput.builder()
             .id("imageFile")
-            .acceptedExtensions(List.of(".jpg", ".png"))
+            .allowedFileExtensions(List.of(".jpg", ".png"))
             .build();
 
         exception = assertThrows(
@@ -90,7 +90,7 @@ class FileInputTest {
     void validateMimeTypes() {
         final FileInput textInput = FileInput.builder()
             .id("textFile")
-            .acceptedExtensions(List.of(".csv", ".json"))
+            .allowedFileExtensions(List.of(".csv", ".json"))
             .build();
 
         // Test valid file types
@@ -109,7 +109,7 @@ class FileInputTest {
     void validateNullValues() {
         final FileInput csvInput = FileInput.builder()
             .id("csvFile")
-            .acceptedExtensions(List.of(".csv"))
+            .allowedFileExtensions(List.of(".csv"))
             .build();
 
         // Null input should be allowed (for optional inputs)
@@ -118,7 +118,7 @@ class FileInputTest {
         // Null extensions should not enforce any validation
         final FileInput anyInput = FileInput.builder()
             .id("anyFile")
-            .acceptedExtensions(null)
+            .allowedFileExtensions(null)
             .build();
         assertDoesNotThrow(() -> anyInput.validate(URI.create("file:///path/to/any.file")));
     }
@@ -127,7 +127,7 @@ class FileInputTest {
     void validateEmptyAccept() {
         final FileInput anyInput = FileInput.builder()
             .id("anyFile")
-            .acceptedExtensions(List.of())
+            .allowedFileExtensions(List.of())
             .build();
 
         // Empty extensions list should not enforce any validation
