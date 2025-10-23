@@ -154,6 +154,7 @@
                     :id="`file-${input.id}`"
                     class="custom-file-input"
                     :accept="input.allowedFileExtensions?.join(',')"
+                    :data-testid="`input-form-${input.id}`"  
                     @change="onFileChange(input, $event)"
                 >
                 <span class="file-placeholder" v-if="!inputsValues[input.id]">
@@ -262,11 +263,9 @@
         {{ $t("no inputs") }}
     </el-alert>
 </template>
-<script setup lang="ts">
-    import ValidationError from "../flows/ValidationError.vue";
-    import {ElMessage} from "element-plus";
-</script>
 <script lang="ts">
+    import {ElMessage} from "element-plus";
+
     import {toRaw} from "vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
@@ -275,14 +274,8 @@
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
     import DurationPicker from "./DurationPicker.vue";
-    import {inputsToFormData} from "../../utils/submitTask"
+    import {inputsToFormData} from "../../utils/submitTask";
 
-    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-    import Pencil from "vue-material-design-icons/Pencil.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
 
     export default {
         computed: {
@@ -467,9 +460,20 @@
 
                 const file = files[0];
                 
+                // Sanitize the filename: remove spaces and special characters
+                const sanitizedName = file.name
+                    .replace(/[^a-zA-Z0-9.-]/g, "_") // Replace special chars with underscore
+                    .replace(/\s+/g, "_");           // Replace spaces with underscore
+                
+                // Create a new File object with the sanitized name
+                const sanitizedFile = new File([file], sanitizedName, {
+                    type: file.type,
+                    lastModified: file.lastModified,
+                });
+                
                 if (input.accept) {
                     const allowedTypes = input.accept.toLowerCase().split(",");
-                    const fileName = file.name.toLowerCase();
+                    const fileName = sanitizedName.toLowerCase();
                     const fileType = file.type.toLowerCase();
                     
                     const isAllowed = allowedTypes.some(type => {
@@ -488,7 +492,7 @@
                     }
                 }
 
-                this.inputsValues[input.id] = file;
+                this.inputsValues[input.id] = sanitizedFile;
                 setTimeout(() => this.onChange(input), 300);
             },
             onYamlChange(input, e) {
@@ -830,7 +834,7 @@
 
 .file-placeholder {
   margin-left: 8px;
-  color: var(--ks-content-secondary);
+  color: var(--ks-content-secondary) !important;
   font-size: 0.9em;
 }
 </style>
