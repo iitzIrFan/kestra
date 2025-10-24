@@ -149,20 +149,17 @@
                 type="time"
             />
             <div class="el-input el-input-file" v-if="input.type === 'FILE'">
-                <input
-                    type="file"
-                    :id="`file-${input.id}`"
-                    class="custom-file-input"
-                    :accept="input.allowedFileExtensions?.join(',')"
-                    :data-testid="`input-form-${input.id}`"  
-                    @change="onFileChange(input, $event)"
-                >
-                <span class="file-placeholder" v-if="!inputsValues[input.id]">
-                    {{ $t('choose file') }}
-                </span>
-                <span class="file-placeholder" v-else>
-                    {{ inputsValues[input.id].name }}
-                </span>
+                <div class="el-input__wrapper">
+                    <input
+                        :data-testid="`input-form-${input.id}`"
+                        :id="input.id+'-file'"
+                        class="el-input__inner custom-file-input"
+                        type="file"
+                        @change="onFileChange(input, $event)"
+                        autocomplete="off"
+                    >
+                    <span class="file-placeholder" v-html="getFilePlaceholder(inputsValues[input.id])" />
+                </div>
             </div>
             <div
                 v-if="input.type === 'ARRAY'"
