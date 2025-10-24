@@ -262,7 +262,7 @@
 </template>
 <script lang="ts">
     import {ElMessage} from "element-plus";
-
+    import ValidationError from "../flows/ValidationError.vue";
     import {toRaw} from "vue";
     import {mapStores} from "pinia";
     import {useExecutionsStore} from "../../stores/executions";
@@ -272,6 +272,12 @@
     import Inputs from "../../utils/inputs";
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormData} from "../../utils/submitTask";
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
+    import Pencil from "vue-material-design-icons/Pencil.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
 
 
     export default {
@@ -286,7 +292,7 @@
                     null
             }
         },
-        components: {Editor, Markdown, DurationPicker},
+        components: {Editor, Markdown, DurationPicker, ValidationError, ChevronUp, ChevronDown},
         props: {
             executeClicked: {
                 type: Boolean,
@@ -330,6 +336,11 @@
                 selectedTriggerLocal: {},
                 editingArrayId: null,
                 editableItems: {},
+                // expose icon components to the template so linters and the template can resolve them
+                DeleteOutline,
+                Pencil,
+                Plus,
+                ContentSave,
             };
         },
         emits: ["update:modelValue", "update:modelValueNoDefault", "confirm", "validation"],
