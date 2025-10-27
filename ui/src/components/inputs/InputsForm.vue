@@ -155,6 +155,7 @@
                         :id="input.id+'-file'"
                         class="el-input__inner custom-file-input"
                         type="file"
+                        :accept="getAcceptedFileTypes(input)"
                         @change="onFileChange(input, $event)"
                         autocomplete="off"
                     >
@@ -479,8 +480,9 @@
                     lastModified: file.lastModified,
                 });
                 
-                if (input.accept) {
-                    const allowedTypes = input.accept.toLowerCase().split(",");
+                const acceptedTypes = this.getAcceptedFileTypes(input);
+                if (acceptedTypes) {
+                    const allowedTypes = acceptedTypes.toLowerCase().split(",");
                     const fileName = sanitizedName.toLowerCase();
                     const fileType = file.type.toLowerCase();
                     
@@ -494,7 +496,7 @@
                     });
                     
                     if (!isAllowed) {
-                        ElMessage.error(this.$t("fileTypeNotAllowed", {types: input.accept}));
+                        ElMessage.error(this.$t("fileTypeNotAllowed", {types: acceptedTypes}));
                         e.target.value = "";
                         return;
                     }
@@ -654,6 +656,12 @@
                     return value.name;
                 }
                 return this.$t("no_file_choosen");
+            },
+            getAcceptedFileTypes(input: { allowedFileExtensions?: string[]; accept?: string; }) {
+                if (input.allowedFileExtensions && input.allowedFileExtensions.length > 0) {
+                    return input.allowedFileExtensions.join(",");
+                }
+                return input.accept || "";
             },
         },
         watch: {
@@ -840,9 +848,34 @@
   visibility: hidden;
 }
 
-.file-placeholder {
-  margin-left: 8px;
-  color: var(--ks-content-secondary) !important;
-  font-size: 0.9em;
+.el-input-file {
+  .el-input__wrapper {
+    display: flex;
+    align-items: center;
+    padding: 4px 0 4px 0;
+    position: relative;
+    max-width: 100%;
+  }
+
+  .custom-file-input {
+    max-width: 110px;
+    min-width: 110px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .file-placeholder {
+    margin-left: 8px;
+    color: var(--ks-content-secondary) !important;
+    font-size: 0.9em;
+    flex: 1;
+    max-width: calc(100% - 140px); /* 110px for button + 30px for margins/padding */
+    min-width: 0;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-right: 16px;
+  }
 }
 </style>
