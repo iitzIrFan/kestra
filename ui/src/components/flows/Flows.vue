@@ -61,12 +61,12 @@
                 <template #table>
                     <SelectTable
                         ref="selectTable"
-                        :data="flowStore.flows"
+                        :data="sortedFlows"
                         :defaultSort="{prop: 'id', order: 'ascending'}"
                         tableLayout="auto"
                         fixed
                         @row-dblclick="onRowDoubleClick"
-                        @sort-change="onSort"
+                        @sort-change="onLocalSort"
                         :rowClassName="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
@@ -185,6 +185,8 @@
                                 <el-table-column
                                     v-else-if="colProp === 'state.current' && user.hasAny(permission.EXECUTION)"
                                     prop="state.current"
+                                    sortable
+                                    :sortMethod="sortByExecutionStatus"
                                     :label="t('last execution status')"
                                 >
                                     <template #default="scope">
@@ -309,6 +311,10 @@
     const flowStore = useFlowStore();
     const authStore = useAuthStore();
     const executionsStore = useExecutionsStore();
+    
+    // For client-side sorting
+    const sortProp = ref("id");
+    const sortOrder = ref("ascending");
 
     const route = useRoute();
     const router = useRouter();
@@ -380,6 +386,35 @@
     const canDelete = computed(() => user.value?.isAllowed(permission.FLOW, action.DELETE, route.query.namespace));
     const canUpdate = computed(() => user.value?.isAllowed(permission.FLOW, action.UPDATE, route.query.namespace));
 
+    // Computed property for sorted flows
+    const sortedFlows = computed(() => {
+        if (!flowStore.flows) return [];
+        
+        return [...flowStore.flows].sort((a, b) => {
+            let compareA, compareB;
+            
+            if (sortProp.value === "state.current") {
+                // Special handling for execution status
+                const statusA = getLastExecution(a)?.status?.toUpperCase() || "";
+                const statusB = getLastExecution(b)?.status?.toUpperCase() || "";
+                compareA = statusA;
+                compareB = statusB;
+            } else {
+                // Standard property sorting
+                compareA = a[sortProp.value] || "";
+                compareB = b[sortProp.value] || "";
+            }
+            
+            // Handle comparison
+            let result = 0;
+            if (compareA < compareB) result = -1;
+            if (compareA > compareB) result = 1;
+            
+            // Apply sort order
+            return sortOrder.value === "descending" ? -result : result;
+        });
+    });
+
     const routeInfo = computed(() => ({title: t("flows")}));
 
     const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
@@ -388,6 +423,7 @@
         queryWithFilter, 
         onPageChanged, 
         onRowDoubleClick, 
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         onSort
     } = useDataTableActions({dblClickRouteName: "flows/update"});
 
@@ -442,8 +478,10 @@
         type: "io.kestra.plugin.core.dashboard.chart.TimeSeries",
         chartOptions: {
             displayName: "Total Executions",
-            description: "Executions duration and count per date",
-            legend: {enabled: false},
+            description: "",
+            legend: {
+                enabled: true
+            },
             column: "date",
             colorByColumn: "state",
             width: 12,
@@ -613,6 +651,29 @@
 
     function rowClasses(row: any) {
         return row && row.row && row.row.disabled ? "disabled" : "";
+    }
+
+    function onLocalSort(column: any) {
+        sortProp.value = column.prop;
+        sortOrder.value = column.order;
+    }
+
+    function sortByExecutionStatus(a: any, b: any) {
+        // Get the execution status for each row, default to empty string
+        const statusA = getLastExecution(a)?.status?.toUpperCase() || "";
+        const statusB = getLastExecution(b)?.status?.toUpperCase() || "";
+        
+        // If both have the same status (or no status), sort by flow ID
+        if (statusA === statusB) {
+            return a.id.localeCompare(b.id);
+        }
+        
+        // If one of them has no status, put it at the end
+        if (!statusA) return 1;
+        if (!statusB) return -1;
+        
+        // Compare the status strings
+        return statusA.localeCompare(statusB);
     }
 
     function mappedChart(id: string, namespace: string) {
