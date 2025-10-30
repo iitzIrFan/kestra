@@ -341,6 +341,26 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             });
     }
 
+    // Fixing incompatible type inference and orderBy type mismatch
+    public List<FlowInterface> findAll(String tenantId, String sortBy, boolean ascending) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(
+                        field("value"),
+                        field("namespace"),
+                        field("tenant_id")
+                    )
+                    .from(fromLastRevision(true))
+                    .where(this.defaultFilter(tenantId))
+                    .orderBy(ascending ? field(sortBy).asc() : field(sortBy).desc());
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
     @Override
     public List<Flow> findAllForAllTenants() {
         return this.jdbcRepository

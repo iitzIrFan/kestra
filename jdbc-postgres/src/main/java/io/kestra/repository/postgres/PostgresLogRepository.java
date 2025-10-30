@@ -76,7 +76,12 @@ public class PostgresLogRepository extends AbstractJdbcLogRepository {
             // Check if descriptors contain a filter of type Logs.Fields.LEVEL and apply the custom filter "statesFilter" if present
             List<In<Logs.Fields>> levelFilters = filters.stream()
                 .filter(descriptor -> descriptor.getField().equals(Logs.Fields.LEVEL) && descriptor instanceof In)
-                .map(descriptor -> (In<Logs.Fields>) descriptor)
+                .map(descriptor -> {
+                    if (descriptor instanceof In<?> inDescriptor && inDescriptor.getField() instanceof Logs.Fields) {
+                        return (In<Logs.Fields>) descriptor;
+                    }
+                    throw new IllegalArgumentException("Invalid descriptor type");
+                })
                 .toList();
 
             if (!levelFilters.isEmpty()) {

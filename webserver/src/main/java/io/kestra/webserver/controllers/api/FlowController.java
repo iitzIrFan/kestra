@@ -59,6 +59,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -232,11 +233,38 @@ public class FlowController {
     ) throws HttpStatusException {
         filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
 
-        return PagedResults.of(flowRepository.find(
-            PageableUtils.from(page, size, sort),
-            tenantService.resolveTenant(),
-            filters
-        ));
+        // Check if sorting by execution status is requested
+        AtomicBoolean sortByExecutionStatus = new AtomicBoolean(false);
+        List<String> modifiedSort = sort;
+
+        if (sort != null) {
+            modifiedSort = sort.stream()
+                .map(s -> {
+                    if (s.startsWith("state.current:")) {
+                        sortByExecutionStatus.set(true);
+                        // Convert state.current to lastExecutionStatus while preserving sort direction
+                        return "lastExecutionStatus" + s.substring(s.lastIndexOf(":"));
+                    }
+                    return s;
+                })
+                .toList();
+        }
+
+        if (sortByExecutionStatus.get()) {
+            // Use a modified query that joins with executions table
+            return PagedResults.of(flowRepository.findWithLastExecutionStatus(
+                PageableUtils.from(page, size, modifiedSort),
+                tenantService.resolveTenant(),
+                filters
+            ));
+        } else {
+            // Use regular flow search
+            return PagedResults.of(flowRepository.find(
+                PageableUtils.from(page, size, modifiedSort),
+                tenantService.resolveTenant(),
+                filters
+            ));
+        }
     }
 
 

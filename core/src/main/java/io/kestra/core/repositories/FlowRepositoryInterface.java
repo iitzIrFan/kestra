@@ -134,6 +134,12 @@ public interface FlowRepositoryInterface extends QueryBuilderInterface<Flows.Fie
         @Nullable List<QueryFilter> filters
     );
 
+    ArrayListTotal<Flow> findWithLastExecutionStatus(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters
+    );
+
     ArrayListTotal<FlowWithSource> findWithSource(
         Pageable pageable,
         @Nullable String tenantId,

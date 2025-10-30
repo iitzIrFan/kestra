@@ -168,7 +168,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .and(field("namespace").eq(namespace))
                     .and(field("flow_id").eq(flowId))
                     .and(statesFilter(states))
-                    .orderBy(field("start_date").desc());
+                    .orderBy(field("start_date").asc());
                 return this.jdbcRepository.fetchOne(from);
             });
     }

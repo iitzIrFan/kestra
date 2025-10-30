@@ -313,8 +313,8 @@
     const executionsStore = useExecutionsStore();
     
     // For client-side sorting
-    const sortProp = ref("id");
-    const sortOrder = ref("ascending");
+    // const sortProp = ref("id");
+    // const sortOrder = ref("ascending");
 
     const route = useRoute();
     const router = useRouter();
@@ -386,34 +386,8 @@
     const canDelete = computed(() => user.value?.isAllowed(permission.FLOW, action.DELETE, route.query.namespace));
     const canUpdate = computed(() => user.value?.isAllowed(permission.FLOW, action.UPDATE, route.query.namespace));
 
-    // Computed property for sorted flows
-    const sortedFlows = computed(() => {
-        if (!flowStore.flows) return [];
-        
-        return [...flowStore.flows].sort((a, b) => {
-            let compareA, compareB;
-            
-            if (sortProp.value === "state.current") {
-                // Special handling for execution status
-                const statusA = getLastExecution(a)?.status?.toUpperCase() || "";
-                const statusB = getLastExecution(b)?.status?.toUpperCase() || "";
-                compareA = statusA;
-                compareB = statusB;
-            } else {
-                // Standard property sorting
-                compareA = a[sortProp.value] || "";
-                compareB = b[sortProp.value] || "";
-            }
-            
-            // Handle comparison
-            let result = 0;
-            if (compareA < compareB) result = -1;
-            if (compareA > compareB) result = 1;
-            
-            // Apply sort order
-            return sortOrder.value === "descending" ? -result : result;
-        });
-    });
+    // Use server-side sorting directly from the flowStore
+    const sortedFlows = computed(() => flowStore.flows || []);
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
@@ -422,9 +396,7 @@
     const {
         queryWithFilter, 
         onPageChanged, 
-        onRowDoubleClick, 
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        onSort
+        onRowDoubleClick
     } = useDataTableActions({dblClickRouteName: "flows/update"});
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
@@ -478,9 +450,9 @@
         type: "io.kestra.plugin.core.dashboard.chart.TimeSeries",
         chartOptions: {
             displayName: "Total Executions",
-            description: "",
+            description: "A chart showing total executions over time.",
             legend: {
-                enabled: true
+                enabled: true,
             },
             column: "date",
             colorByColumn: "state",
@@ -622,14 +594,14 @@
         return _merge(base, queryFilter);
     }
 
-    function loadData(callback: () => void) {
+    function loadData(callback: () => void, options: { sort?: string } = {}) {
         const q = route.query;
         flowStore
             .findFlows(
                 loadQuery({
                     size: parseInt(props.namespace ? internalPageSize.value.toString() : (q.size as string) ?? "25"),
                     page: parseInt(props.namespace ? internalPageNumber.value.toString() : (q.page as string) ?? "1"),
-                    sort: (q.sort as string) ?? "id:asc",
+                    sort: (options.sort || (q.sort as string)) ?? "id:asc",
                 })
             )
             .then((data: any) => {
@@ -654,8 +626,15 @@
     }
 
     function onLocalSort(column: any) {
-        sortProp.value = column.prop;
-        sortOrder.value = column.order;
+        if (column.prop === "state.current") {
+            // For last execution status, use server-side sorting
+            const sort = `lastExecutionStatus:${column.order === "ascending" ? "asc" : "desc"}`;
+            loadData(() => {}, {sort});
+        } else {
+            // For other columns, use the standard sort
+            const sort = `${column.prop}:${column.order === "ascending" ? "asc" : "desc"}`;
+            loadData(() => {}, {sort});
+        }
     }
 
     function sortByExecutionStatus(a: any, b: any) {
