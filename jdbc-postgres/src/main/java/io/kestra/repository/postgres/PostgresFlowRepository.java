@@ -54,21 +54,64 @@ public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
 
     @Override
     public ArrayListTotal<Flow> findWithLastExecutionStatus(Pageable pageable, String tenantId, List<QueryFilter> filters) {
-        Select<?> select = dslContext.select(DSL.field("f.*"), DSL.field("e.state_current", String.class).as("lastExecutionStatus"))
-            .from(DSL.table("flows").as("f"))
-            .leftJoin(DSL.table("executions").as("e"))
-                .on(DSL.field("f.id").eq(DSL.field("e.flow_id")))
-            .where(DSL.field("f.tenant_id").eq(tenantId))
-            .and(DSL.field("e.state_current").isNotNull()) // Ensure state_current is not null
-            .orderBy(DSL.field("e.state_current").desc())
-            .limit(pageable.getSize())
-            .offset(pageable.getOffset());
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                // Latest execution per flow (by end_date or start_date desc)
+                var latestExec = context.select(
+                        DSL.field(DSL.quotedName("tenant_id")).as("tenant_id"),
+                        DSL.field(DSL.quotedName("namespace")).as("namespace"),
+                        DSL.field(DSL.quotedName("flow_id")).as("flow_id"),
+                        DSL.field(DSL.quotedName("state_current")).as("state_current"),
+                        DSL.rowNumber().over(
+                            DSL.partitionBy(
+                                DSL.field(DSL.quotedName("tenant_id")),
+                                DSL.field(DSL.quotedName("namespace")),
+                                DSL.field(DSL.quotedName("flow_id"))
+                            ).orderBy(DSL.coalesce(
+                                DSL.field(DSL.quotedName("end_date")),
+                                DSL.field(DSL.quotedName("start_date"))
+                            ).desc())
+                        ).as("row_num")
+                    )
+                    .from(DSL.table("executions"))
+                    .where(DSL.field(DSL.quotedName("tenant_id")).eq(tenantId))
+                    .asTable("e_latest");
 
-        List<Flow> flows = jdbcRepository.fetch(select)
-            .stream()
-            .map(flow -> (Flow) flow)
-            .collect(Collectors.toList());
+                Select<?> select = context
+                    .select(DSL.field(DSL.quotedName("ft", "value")), DSL.field(DSL.quotedName("ft", "namespace")), DSL.field(DSL.quotedName("ft", "tenant_id")))
+                    .from(fromLastRevision(false))
+                    .join(jdbcRepository.getTable().as("ft"))
+                        .on(
+                            DSL.field(DSL.quotedName("ft", "key")).eq(DSL.field(DSL.quotedName("rev", "key")))
+                            .and(DSL.field(DSL.quotedName("ft", "revision")).eq(DSL.field(DSL.quotedName("rev", "revision"))))
+                        )
+                    .leftJoin(latestExec)
+                        .on(DSL.field(DSL.quotedName("ft", "id")).eq(DSL.field(DSL.quotedName("e_latest", "flow_id")))
+                            .and(DSL.field(DSL.quotedName("ft", "namespace")).eq(DSL.field(DSL.quotedName("e_latest", "namespace"))))
+                            .and(DSL.field(DSL.quotedName("ft", "tenant_id")).eq(DSL.field(DSL.quotedName("e_latest", "tenant_id"))))
+                            .and(DSL.field(DSL.quotedName("e_latest", "row_num")).eq(1))
+                        )
+                    .where(
+                        DSL.field(DSL.quotedName("ft", "tenant_id")).eq(tenantId)
+                    )
+                    .and(
+                        DSL.field(DSL.quotedName("ft", "deleted")).eq(false)
+                    )
+                    .orderBy(
+                        DSL.case_().when(DSL.field(DSL.quotedName("e_latest", "state_current")).isNull(), 1).otherwise(0).asc(),
+                        DSL.field(DSL.quotedName("e_latest", "state_current")).desc()
+                    )
+                    .limit(pageable.getSize())
+                    .offset(pageable.getOffset());
 
-        return new ArrayListTotal<>(flows, flows.size());
+                List<Flow> flows = jdbcRepository.fetch(select)
+                    .stream()
+                    .map(flow -> (Flow) flow)
+                    .toList();
+
+                return new ArrayListTotal<>(flows, flows.size());
+            });
     }
 }

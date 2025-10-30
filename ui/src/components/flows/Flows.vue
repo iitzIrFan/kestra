@@ -627,9 +627,8 @@
 
     function onLocalSort(column: any) {
         if (column.prop === "state.current") {
-            // For last execution status, use server-side sorting
-            const sort = `lastExecutionStatus:${column.order === "ascending" ? "asc" : "desc"}`;
-            loadData(() => {}, {sort});
+            // Use client-side sorting for last execution status; avoid server reload
+            return;
         } else {
             // For other columns, use the standard sort
             const sort = `${column.prop}:${column.order === "ascending" ? "asc" : "desc"}`;
