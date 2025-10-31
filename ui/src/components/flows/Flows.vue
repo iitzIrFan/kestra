@@ -322,6 +322,7 @@
     
     const flowFilter = useFlowFilter();
 
+    const ready = ref(false);
     const lastExecutionByFlowReady = ref(false);
     const latestExecutions = ref<any[]>([]);
     const file = ref<HTMLInputElement | null>(null);
@@ -389,14 +390,14 @@
     const dataTableRef = useTemplateRef<DataTableRef>("dataTable");
     const selectTableRef = useTemplateRef<typeof SelectTable>("selectTable");
 
-    function loadData(callback?: () => void) {
+    function loadData(callback?: () => void, options: { sort?: string } = {}) {
         const q = route.query;
         flowStore
             .findFlows(
                 loadQuery({
                     size: parseInt(q.size as string ?? "25"),
                     page: parseInt(q.page as string ?? "1"),
-                    sort: (q.sort as string) ?? "id:asc",
+                    sort: (options.sort || (q.sort as string)) ?? "id:asc",
                 })
             )
             .then((data: any) => {
@@ -416,7 +417,14 @@
         queryWithFilter, 
         onPageChanged, 
         onRowDoubleClick
-    } = useDataTableActions({dblClickRouteName: "flows/update"});
+    } = useDataTableActions({
+        dblClickRouteName: "flows/update",
+        loadData: (callback) => loadData(() => {
+            ready.value = true;
+            callback?.();
+        }),
+        dataTableRef: dataTableRef
+    });
 
     function selectionMapper({id, namespace, disabled}: {id: string; namespace: string; disabled: boolean}) {
         return {
@@ -613,28 +621,7 @@
         return _merge(base, queryFilter);
     }
 
-    function loadData(callback: () => void, options: { sort?: string } = {}) {
-        const q = route.query;
-        flowStore
-            .findFlows(
-                loadQuery({
-                    size: parseInt(props.namespace ? internalPageSize.value.toString() : (q.size as string) ?? "25"),
-                    page: parseInt(props.namespace ? internalPageNumber.value.toString() : (q.page as string) ?? "1"),
-                    sort: (options.sort || (q.sort as string)) ?? "id:asc",
-                })
-            )
-            .then((data: any) => {
-                if (user.value?.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.READ)) {
-                    executionsStore.loadLatestExecutions({
-                        flowFilters: data.results.map((flow: any) => ({id: flow.id, namespace: flow.namespace})),
-                    }).then((latestExecs: any) => {
-                        latestExecutions.value = latestExecs;
-                        lastExecutionByFlowReady.value = true;
-                    });
-                }
-            })
-            .finally(callback);
-    }
+    
 
     function refresh() {
         loadData(() => {});
@@ -694,7 +681,14 @@
             queryHasChanged = true;
         }
 
-        if (queryHasChanged) router.replace({query});
+        if (queryHasChanged) {
+            router.replace({query});
+        } else {
+            // Initial load - useDataTableActions will handle subsequent route changes
+            loadData(() => {
+                ready.value = true;
+            });
+        }
     });
 
 </script>
