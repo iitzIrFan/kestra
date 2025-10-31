@@ -59,12 +59,10 @@
                 <template #table>
                     <SelectTable
                         ref="selectTable"
-                        :data="sortedFlows"
-                        :defaultSort="{prop: 'id', order: 'ascending'}"
+                        :data="flowStore.flows"
                         tableLayout="auto"
                         fixed
                         @row-dblclick="onRowDoubleClick"
-                        @sort-change="onLocalSort"
                         :rowClassName="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
@@ -310,10 +308,6 @@
     const authStore = useAuthStore();
     const executionsStore = useExecutionsStore();
     
-    // For client-side sorting
-    // const sortProp = ref("id");
-    // const sortOrder = ref("ascending");
-
     const route = useRoute();
     const router = useRouter();
 
@@ -381,9 +375,6 @@
     const canRead = computed(() => user.value?.isAllowed(permission.FLOW, action.READ, route.query.namespace));
     const canDelete = computed(() => user.value?.isAllowed(permission.FLOW, action.DELETE, route.query.namespace));
     const canUpdate = computed(() => user.value?.isAllowed(permission.FLOW, action.UPDATE, route.query.namespace));
-
-    // Use server-side sorting directly from the flowStore
-    const sortedFlows = computed(() => flowStore.flows || []);
 
     const routeInfo = computed(() => ({title: t("flows")}));
 
@@ -629,17 +620,6 @@
 
     function rowClasses(row: any) {
         return row && row.row && row.row.disabled ? "disabled" : "";
-    }
-
-    function onLocalSort(column: any) {
-        if (column.prop === "state.current") {
-            // Use client-side sorting for last execution status; avoid server reload
-            return;
-        } else {
-            // For other columns, use the standard sort
-            const sort = `${column.prop}:${column.order === "ascending" ? "asc" : "desc"}`;
-            loadData(() => {}, {sort});
-        }
     }
 
     function sortByExecutionStatus(a: any, b: any) {
