@@ -1,5 +1,5 @@
 <template>
-    <SideBar v-if="menu" :menu :showLink="showLink" @menu-collapse="onCollapse">
+    <SideBar v-if="menu" :menu="menu" :showLink="showLink" @menu-collapse="onCollapse">
         <template #footer>
             <Auth />    
         </template>
@@ -12,7 +12,7 @@
     import Auth from "../../override/components/auth/Auth.vue";
 
     withDefaults(defineProps<{
-        showLink: boolean
+        showLink?: boolean
     }>(), {
         showLink: true
     });
