@@ -169,6 +169,11 @@
 
     // Methods
     const load = async (taskId: string) => {
+        await flowStore.loadFlow({
+            namespace: props.namespace,
+            id: props.flowId,
+            revision: props.revision?.toString(),
+        });
         let effectiveSource: string | undefined;
 
         // 1) Exact revision source if requested
@@ -188,13 +193,13 @@
             effectiveSource = props.flowSource;
         }
 
-        // 3) Finally, fallback to store flow source
+        // 3) Use store flow source (should always be available after loadFlow)
         if (!effectiveSource) {
-            effectiveSource = flowStore.flow?.source;
+            effectiveSource = flowStore.flow.source;
         }
 
         // Try direct block extraction first
-        const sectionKey = (typeof props.section === "string" ? props.section : "tasks").toLowerCase();
+        const sectionKey = props.section.toLowerCase();
         const block = YAML_UTILS.extractBlock({
             section: sectionKey,
             source: effectiveSource ?? "",
@@ -202,15 +207,18 @@
         });
         if (block && block.length > 0) return block;
 
-        // Fallback: parse whole flow and find task by id then stringify it
-        try {
-            const parsed = YAML_UTILS.parse(effectiveSource ?? "");
-            const taskObj = FlowUtils.findTaskById(parsed, taskId);
-            if (taskObj) {
-                return YAML_UTILS.stringify(taskObj);
+        // Fallback: as a safety net, parse the whole flow only if we have a source
+        // This path should rarely be needed when block extraction works as expected.
+        if (effectiveSource) {
+            try {
+                const parsed = YAML_UTILS.parse(effectiveSource);
+                const taskObj = FlowUtils.findTaskById(parsed, taskId);
+                if (taskObj) {
+                    return YAML_UTILS.stringify(taskObj);
+                }
+            } catch {
+                // ignore, will return empty string below
             }
-        } catch {
-            // ignore, will return empty string below
         }
 
         return "";
