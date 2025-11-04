@@ -132,7 +132,11 @@
     function selectVersion(ver: string | undefined) {
         router.push({
             name: "plugins/view",
-            params: {cls: pluginType.value, version: ver},
+            params: {
+                ...route.params,
+                cls: pluginType.value,
+                version: ver
+            },
         });
     }
 
