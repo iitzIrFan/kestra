@@ -97,6 +97,7 @@
     import {usePluginsStore} from "../../stores/plugins";
     import {useAuthStore} from "override/stores/auth";
     import {useFlowStore} from "../../stores/flow";
+    import FlowUtils from "../../utils/flowUtils";
 
     const {t} = useI18n()
 
@@ -164,14 +165,13 @@
 
     const isLoading = computed(() => taskYaml.value === undefined);
 
-    const source = computed(() => {
-        return props.revision
-            ? revisions.value?.[props.revision - 1]?.source
-            : flowStore.flow?.source;
-    });
+    // Note: no standalone computed 'source' to avoid unused variable during builds
 
     // Methods
     const load = async (taskId: string) => {
+        let effectiveSource: string | undefined;
+
+        // 1) Exact revision source if requested
         if (props.revision) {
             if (!revisions.value?.[props.revision - 1]) {
                 revisions.value = await flowStore.loadRevisions({
@@ -180,12 +180,40 @@
                     store: false
                 });
             }
+            effectiveSource = revisions.value?.[props.revision - 1]?.source;
         }
-        return YAML_UTILS.extractBlock({
-            section: props.section,
-            source: source.value,
+
+        // 2) Fallback to provided flowSource (e.g., from logs/Gantt)
+        if (!effectiveSource && props.flowSource) {
+            effectiveSource = props.flowSource;
+        }
+
+        // 3) Finally, fallback to store flow source
+        if (!effectiveSource) {
+            effectiveSource = flowStore.flow?.source;
+        }
+
+        // Try direct block extraction first
+        const sectionKey = (typeof props.section === "string" ? props.section : "tasks").toLowerCase();
+        const block = YAML_UTILS.extractBlock({
+            section: sectionKey,
+            source: effectiveSource ?? "",
             key: taskId,
         });
+        if (block && block.length > 0) return block;
+
+        // Fallback: parse whole flow and find task by id then stringify it
+        try {
+            const parsed = YAML_UTILS.parse(effectiveSource ?? "");
+            const taskObj = FlowUtils.findTaskById(parsed, taskId);
+            if (taskObj) {
+                return YAML_UTILS.stringify(taskObj);
+            }
+        } catch {
+            // ignore, will return empty string below
+        }
+
+        return "";
     };
 
     const saveTask = () => {
