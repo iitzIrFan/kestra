@@ -37,11 +37,10 @@
 
     interface Props {
         title: string;
-        content: string;
-        link: string;
         category: string;
+        content?: string;
+        link?: string;
         [key: string]: any;
-
     }
 
     const props = defineProps<Props>();
