@@ -181,8 +181,8 @@
                                 <el-table-column
                                     v-else-if="colProp === 'state.current' && user.hasAny(permission.EXECUTION)"
                                     prop="state.current"
-                                    sortable
-                                    :sortMethod="sortByExecutionStatus"
+                                    sortable="custom"
+                                    :sortOrders="['ascending', 'descending']"
                                     :label="t('last execution status')"
                                 >
                                     <template #default="scope">
@@ -625,23 +625,6 @@
         return row && row.row && row.row.disabled ? "disabled" : "";
     }
 
-    function sortByExecutionStatus(a: any, b: any) {
-        // Get the execution status for each row, default to empty string
-        const statusA = getLastExecution(a)?.status?.toUpperCase() || "";
-        const statusB = getLastExecution(b)?.status?.toUpperCase() || "";
-        
-        // If both have the same status (or no status), sort by flow ID
-        if (statusA === statusB) {
-            return a.id.localeCompare(b.id);
-        }
-        
-        // If one of them has no status, put it at the end
-        if (!statusA) return 1;
-        if (!statusB) return -1;
-        
-        // Compare the status strings
-        return statusA.localeCompare(statusB);
-    }
 
     function mappedChart(id: string, namespace: string) {
         let MAPPED_CHARTS = JSON.parse(JSON.stringify(CHART_DEFINITION));

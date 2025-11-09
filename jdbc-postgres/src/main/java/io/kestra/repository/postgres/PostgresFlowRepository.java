@@ -58,6 +58,16 @@ public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
+                boolean asc = true; // default sort direction
+                // Defensive: check pageable and sort are not null
+                if (pageable != null && pageable.getSort() != null && pageable.getSort().isSorted()) {
+                    for (io.micronaut.data.model.Sort.Order order : pageable.getSort().getOrderBy()) {
+                        if ("lastExecutionStatus".equalsIgnoreCase(order.getProperty())) {
+                            asc = order.getDirection() == io.micronaut.data.model.Sort.Order.Direction.ASC;
+                            break;
+                        }
+                    }
+                }
                 // Latest execution per flow (by end_date or start_date desc)
                 var latestExec = context.select(
                         DSL.field(DSL.quotedName("tenant_id")).as("tenant_id"),
@@ -78,7 +88,16 @@ public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
                     .from(DSL.table("executions"))
                     .where(DSL.field(DSL.quotedName("tenant_id")).eq(tenantId))
                     .asTable("e_latest");
-
+                // Build order by clause dynamically
+                var orderByList = new ArrayList<org.jooq.SortField<?>>();
+                orderByList.add(
+                    DSL.case_().when(DSL.field(DSL.quotedName("e_latest", "state_current")).isNull(), 1).otherwise(0).asc()
+                );
+                if (asc) {
+                    orderByList.add(DSL.field(DSL.quotedName("e_latest", "state_current")).asc());
+                } else {
+                    orderByList.add(DSL.field(DSL.quotedName("e_latest", "state_current")).desc());
+                }
                 Select<?> select = context
                     .select(DSL.field(DSL.quotedName("ft", "value")), DSL.field(DSL.quotedName("ft", "namespace")), DSL.field(DSL.quotedName("ft", "tenant_id")))
                     .from(fromLastRevision(false))
@@ -99,18 +118,13 @@ public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
                     .and(
                         DSL.field(DSL.quotedName("ft", "deleted")).eq(false)
                     )
-                    .orderBy(
-                        DSL.case_().when(DSL.field(DSL.quotedName("e_latest", "state_current")).isNull(), 1).otherwise(0).asc(),
-                        DSL.field(DSL.quotedName("e_latest", "state_current")).desc()
-                    )
+                    .orderBy(orderByList)
                     .limit(pageable.getSize())
                     .offset(pageable.getOffset());
-
                 List<Flow> flows = jdbcRepository.fetch(select)
                     .stream()
                     .map(flow -> (Flow) flow)
                     .toList();
-
                 return new ArrayListTotal<>(flows, flows.size());
             });
     }
