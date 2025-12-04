@@ -9,6 +9,7 @@ import io.kestra.core.exceptions.AiException;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ToonUtils;
 import io.kestra.core.utils.Version;
 import io.kestra.webserver.models.ai.FlowGenerationPrompt;
 import lombok.RequiredArgsConstructor;
@@ -103,8 +104,8 @@ public class FlowAiCopilot {
         minifySchema(minifiedSchema);
         String flowJsonSchemaString;
         try {
-            flowJsonSchemaString = JacksonMapper.ofJson().writeValueAsString(minifiedSchema);
-        } catch (JsonProcessingException e) {
+            flowJsonSchemaString = ToonUtils.jsonToToon(minifiedSchema);
+        } catch (IllegalArgumentException e) {
             throw new AiException(UNABLE_TO_GENERATE_FLOW_ERROR);
         }
 

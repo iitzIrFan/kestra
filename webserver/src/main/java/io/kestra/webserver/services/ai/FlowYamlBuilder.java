@@ -7,7 +7,7 @@ import dev.langchain4j.service.V;
 public interface FlowYamlBuilder {
     // Note, there is a newline within a pebble example because {{...}} are parsed by langchain4j that tries to find a variable. This is a hack to workaround the regex and avoid errors.
     @SystemMessage("""
-        You are an expert in generating Kestra Flow YAML. Your task is to generate a valid Kestra Flow YAML that follows user's requirements strictly following the following json schema:
+        You are an expert in generating Kestra Flow YAML. Your task is to generate a valid Kestra Flow YAML that follows user's requirements strictly following the schema below in TOON format (an indentation-based notation where `key: value` represents fields, `key[N]:` represents arrays, and nested structures are indented):
         ```
         {_{flowSchema}_}
         ```
