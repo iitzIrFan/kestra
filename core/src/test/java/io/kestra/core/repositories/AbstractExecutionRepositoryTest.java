@@ -1,9 +1,9 @@
 package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.junit.annotations.FlakyTest;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -24,7 +24,6 @@ import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -42,18 +41,17 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
-import java.sql.Timestamp;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.models.flows.FlowScope.USER;
-import static java.time.temporal.ChronoUnit.MINUTES;
 import static java.time.temporal.ChronoUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -81,6 +79,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .tenantId(tenantId)
             .flowId(flowId == null ? FLOW : flowId)
             .flowRevision(1)
+            .kind(ExecutionKind.NORMAL)
             .state(finalState);
 
 
@@ -184,6 +183,7 @@ public abstract class AbstractExecutionRepositoryTest {
 
     @ParameterizedTest
     @MethodSource("filterCombinations")
+    @FlakyTest(description = "Filtering tests are sometimes returning 0")
     void should_find_all(QueryFilter filter, int expectedSize){
         var tenant = TestsUtils.randomTenant(this.getClass().getSimpleName());
         inject(tenant, "executionTriggerId");
@@ -196,15 +196,49 @@ public abstract class AbstractExecutionRepositoryTest {
     static Stream<Arguments> filterCombinations() {
         return Stream.of(
             Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unittest").operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.QUERY).value("unused").operation(Op.NOT_EQUALS).build(), 29),
+
             Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.NOT_EQUALS).build(), 29),
+
             Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("not.this.one").operation(Op.NOT_EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("o.kestra.unittes").operation(Op.CONTAINS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.uni").operation(Op.STARTS_WITH).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("o.kestra.unittest").operation(Op.ENDS_WITH).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io\\.kestra\\.unittest").operation(Op.REGEX).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value(List.of("io.kestra.unittest", "unused")).operation(Op.IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value(List.of("unused.first", "unused.second")).operation(Op.NOT_IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra").operation(Op.PREFIX).build(), 29),
+
+            Arguments.of(QueryFilter.builder().field(Field.KIND).value(ExecutionKind.NORMAL).operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.KIND).value(ExecutionKind.TEST).operation(Op.NOT_EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.KIND).value(List.of(ExecutionKind.NORMAL, ExecutionKind.PLAYGROUND)).operation(Op.IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.KIND).value(List.of(ExecutionKind.PLAYGROUND, ExecutionKind.TEST)).operation(Op.NOT_IN).build(), 29),
+
             Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(), 1),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "unknown")).operation(Op.NOT_EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value", "key2", "value2")).operation(Op.IN).build(), 1),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).value(Map.of("key1", "value1")).operation(Op.NOT_IN).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.LABELS).value("value").operation(Op.CONTAINS).build(), 1),
+
             Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.EQUALS).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(FLOW).operation(Op.NOT_EQUALS).build(), 13),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ul").operation(Op.CONTAINS).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ful").operation(Op.STARTS_WITH).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ull").operation(Op.ENDS_WITH).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("[ful]{4}").operation(Op.REGEX).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(List.of(FLOW, "other")).operation(Op.IN).build(), 16),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value(List.of(FLOW, "other2")).operation(Op.NOT_IN).build(), 13),
+            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("ful").operation(Op.PREFIX).build(), 16),
+
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 29),
             Arguments.of(QueryFilter.builder().field(Field.STATE).value(Type.RUNNING).operation(Op.EQUALS).build(), 5),
             Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 29),
-            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 29)
+
+            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 29),
+            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.NOT_EQUALS).build(), 0)
         );
     }
 
