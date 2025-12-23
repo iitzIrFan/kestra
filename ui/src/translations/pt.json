@@ -883,6 +883,12 @@
         "description": "Filtrar por trigger ID",
         "label": "ID do Trigger"
       },
+      "triggerState": {
+        "description": "Filter by trigger state",
+        "disabled": "Disabled",
+        "enabled": "Enabled",
+        "label": " Trigger State"
+      },
       "update": "Atualizar",
       "value": "Valor",
       "workerId": {

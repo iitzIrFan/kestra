@@ -883,6 +883,12 @@
         "description": "Фильтр по trigger ID",
         "label": "ID триггера"
       },
+      "triggerState": {
+        "description": "Filter by trigger state",
+        "disabled": "Disabled",
+        "enabled": "Enabled",
+        "label": " Trigger State"
+      },
       "update": "Обновить",
       "value": "Значение",
       "workerId": {
