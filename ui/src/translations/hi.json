@@ -883,6 +883,12 @@
         "description": "ट्रिगर ID द्वारा फ़िल्टर करें",
         "label": "ट्रिगर ID"
       },
+      "triggerState": {
+        "description": "Filter by trigger state",
+        "disabled": "Disabled",
+        "enabled": "Enabled",
+        "label": " Trigger State"
+      },
       "update": "अपडेट",
       "value": "मान",
       "workerId": {
