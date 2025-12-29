@@ -1,58 +1,94 @@
 <template>
-    <el-splitter class="default-theme" @resize-end="onResize">
-        <el-splitter-panel :size="panelSize">
-            <div class="panelWrapper" :style="{width: activeTab?.length ? `${panelSize}px` : 0}">
-                <div :style="{overflow: 'hidden'}">
-                    <button v-if="activeTab.length" class="closeButton" @click="setActiveTab('')">
-                        <Close />
-                    </button>
-                    <KeepAlive v-if="activeTab">
-                        <ContextDocs v-if="activeTab === 'docs'" />
-                        <ContextNews v-else-if="activeTab === 'news'" />
-                        <template v-else>
-                            {{ activeTab }}
-                        </template>
-                    </KeepAlive>
+    <el-splitter v-if="Object.keys(buttons).length && activeTab?.length > 0" class="context-splitter">
+        <template #default>
+            <el-splitter-pane :size="panelWidth" :min="50" :max="getMaxPanelWidth()">
+                <div class="panelWrapper">
+                    <div :style="{overflow: 'hidden'}">
+                        <button class="closeButton" @click="setActiveTab('')">
+                            <Close />
+                        </button>
+                        <KeepAlive>
+                            <ContextDocs v-if="activeTab === 'docs'" />
+                            <ContextNews v-else-if="activeTab === 'news'" />
+                            <template v-else>
+                                {{ activeTab }}
+                            </template>
+                        </KeepAlive>
+                    </div>
                 </div>
-            </div>
-        </el-splitter-panel>
-        <el-splitter-panel v-if="Object.keys(buttons).length" :size="64">
-            <div class="barWrapper" :class="{opened: activeTab?.length > 0}">
-                <el-button
-                    v-for="(button, key) of {...buttons, ...props.additionalButtons}"
-                    :key="key"
-                    :type="activeTab === key ? 'primary' : 'default'"
-                    :tag="button.url ? 'a' : 'button'"
-                    :href="button.url"
-                    @click="() => {if(!button.url){ setActiveTab(key as string)}}"
-                    :target="button.url ? '_blank' : undefined"
-                >
-                    <component :is="button.icon" class="context-button-icon" />{{ button.title }}
-                    <OpenInNew v-if="button.url" class="open-in-new" />
-                    <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-                </el-button>
+            </el-splitter-pane>
+            <el-splitter-pane>
+                <div class="barWrapper opened">
+                    <el-button
+                        v-for="(button, key) of {...buttons, ...props.additionalButtons}"
+                        :key="key"
+                        :type="activeTab === key ? 'primary' : 'default'"
+                        :tag="button.url ? 'a' : 'button'"
+                        :href="button.url"
+                        @click="() => {if(!button.url){ setActiveTab(key as string)}}"
+                        :target="button.url ? '_blank' : undefined"
+                    >
+                        <component :is="button.icon" class="context-button-icon" />{{ button.title }}
+                        <OpenInNew v-if="button.url" class="open-in-new" />
+                        <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
+                    </el-button>
 
-                <div style="flex:1" />
+                    <div style="flex:1" />
 
-                <el-tooltip
-                    effect="light"
-                    :persistent="false"
-                    transition=""
-                    :hideAfter="0"
-                    :disabled="!miscStore.configs?.commitId"
-                >
-                    <template #content>
-                        <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
-                    </template>
-                    <span class="versionNumber">{{ miscStore.configs?.version }}</span>
-                </el-tooltip>
-                <el-button class="theme-switcher" @click="onSwitchTheme">
-                    <WeatherNight v-if="themeIsDark" />
-                    <WeatherSunny v-else />
-                </el-button>
-            </div>
-        </el-splitter-panel>
+                    <el-tooltip
+                        effect="light"
+                        :persistent="false"
+                        transition=""
+                        :hideAfter="0"
+                        :disabled="!miscStore.configs?.commitId"
+                    >
+                        <template #content>
+                            <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
+                        </template>
+                        <span class="versionNumber">{{ miscStore.configs?.version }}</span>
+                    </el-tooltip>
+                    <el-button class="theme-switcher" @click="onSwitchTheme">
+                        <WeatherNight v-if="themeIsDark" />
+                        <WeatherSunny v-else />
+                    </el-button>
+                </div>
+            </el-splitter-pane>
+        </template>
     </el-splitter>
+    <div v-else-if="Object.keys(buttons).length" class="barWrapper">
+        <el-button
+            v-for="(button, key) of {...buttons, ...props.additionalButtons}"
+            :key="key"
+            :type="activeTab === key ? 'primary' : 'default'"
+            :tag="button.url ? 'a' : 'button'"
+            :href="button.url"
+            @click="() => {if(!button.url){ setActiveTab(key as string)}}"
+            :target="button.url ? '_blank' : undefined"
+        >
+            <component :is="button.icon" class="context-button-icon" />{{ button.title }}
+            <OpenInNew v-if="button.url" class="open-in-new" />
+            <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
+        </el-button>
+
+        <div style="flex:1" />
+
+        <el-tooltip
+            effect="light"
+            :persistent="false"
+            transition=""
+            :hideAfter="0"
+            :disabled="!miscStore.configs?.commitId"
+        >
+            <template #content>
+                <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
+            </template>
+            <span class="versionNumber">{{ miscStore.configs?.version }}</span>
+        </el-tooltip>
+        <el-button class="theme-switcher" @click="onSwitchTheme">
+            <WeatherNight v-if="themeIsDark" />
+            <WeatherSunny v-else />
+        </el-button>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -101,10 +137,10 @@
         }
     });
 
-    const panelSize = useStorage("context-info-bar-panel-size", 640)
+    const panelWidth = ref("640px")
 
-    function onResize(_index: number, sizes: number[]) {
-        panelSize.value = sizes[0]
+    const getMaxPanelWidth = () => {
+        return `${window.innerWidth * 0.5}px`;
     }
 
     function setActiveTab(tab: string) {
@@ -127,22 +163,11 @@
 <style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
-    .default-theme {
+    .context-splitter {
         height: 100vh;
         
-        :deep(.el-splitter__splitter) {
-            border-left: 1px solid var(--ks-border-primary);
-            background-color: var(--ks-background-panel);
-            width: 3px;
-            cursor: col-resize;
-            
-            &:hover {
-                border-left-color: var(--ks-border-active);
-            }
-            
-            &:before, &:after {
-                background-color: var(--ks-content-secondary);
-            }
+        :deep(.el-splitter__wrapper) {
+            flex-direction: row-reverse;
         }
     }
 
@@ -221,8 +246,8 @@
     }
 
     .panelWrapper {
-        transition: width .1s;
-        width: 0;
+        width: 100%;
+        height: 100vh;
         position: relative;
         overflow-y: auto;
         &::-webkit-scrollbar {
