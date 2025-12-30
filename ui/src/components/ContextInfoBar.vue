@@ -1,7 +1,7 @@
 <template>
     <el-splitter v-if="Object.keys(buttons).length && activeTab?.length > 0" class="context-splitter">
         <template #default>
-            <el-splitter-pane :size="panelWidth" :min="50" :max="getMaxPanelWidth()">
+            <el-splitter-panel :size="panelWidth" min="300px" :max="maxPanelWidth">
                 <div class="panelWrapper">
                     <div :style="{overflow: 'hidden'}">
                         <button class="closeButton" @click="setActiveTab('')">
@@ -16,8 +16,8 @@
                         </KeepAlive>
                     </div>
                 </div>
-            </el-splitter-pane>
-            <el-splitter-pane>
+            </el-splitter-panel>
+            <el-splitter-panel>
                 <div class="barWrapper opened">
                     <el-button
                         v-for="(button, key) of {...buttons, ...props.additionalButtons}"
@@ -52,7 +52,7 @@
                         <WeatherSunny v-else />
                     </el-button>
                 </div>
-            </el-splitter-pane>
+            </el-splitter-panel>
         </template>
     </el-splitter>
     <div v-else-if="Object.keys(buttons).length" class="barWrapper">
@@ -93,7 +93,7 @@
 
 <script setup lang="ts">
     import {computed, ref, type Component, PropType} from "vue";
-    import {useStorage} from "@vueuse/core"
+    import {useStorage, useWindowSize} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
     import DateAgo from "./layout/DateAgo.vue"
@@ -137,11 +137,10 @@
         }
     });
 
-    const panelWidth = ref("640px")
-
-    const getMaxPanelWidth = () => {
-        return `${window.innerWidth * 0.5}px`;
-    }
+    // Reactive panel sizing
+    const {width: windowWidth} = useWindowSize()
+    const panelWidth = ref("40%")
+    const maxPanelWidth = computed(() => `${Math.floor(windowWidth.value * 0.7)}px`)
 
     function setActiveTab(tab: string) {
         if (activeTab.value === tab) {
