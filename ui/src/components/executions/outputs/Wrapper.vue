@@ -561,6 +561,15 @@
     z-index: 0;
 }
 
+/* Hide the visual scrollbar on the right panel but keep scrolling usable */
+.content-container {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+}
+.content-container::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+}
+
 :deep(.el-collapse) {
     .el-collapse-item__wrap {
         max-height: none !important;
