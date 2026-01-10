@@ -2,7 +2,7 @@
     <div class="outputs">
         <el-splitter :layout="isMobile ? 'vertical' : 'horizontal'">
             <el-splitter-panel v-model:size="leftWidth" :min="'30%'" :max="'70%'" class="outputs-top">
-                <div class="d-flex flex-column overflow-x-auto left">
+                <div class="d-flex flex-column overflow-auto left">
                     <el-cascader-panel
                         ref="cascader"
                         v-model="selected"
@@ -460,7 +460,10 @@
 }
 
 :deep(.el-cascader-menu__list) {
-    min-height: 100vh;
+    /* Let the cascader list be constrained by its parent container
+       so it can scroll independently instead of forcing page height */
+    min-height: 0;
+    height: 100%;
 }
 
 :deep(.el-cascader-panel) {
@@ -483,6 +486,20 @@
     background: var(--ks-background-card);
     position: relative;
     z-index: 1;
+}
+
+/* Left column container: take full splitter-panel height and scroll internally */
+.outputs .left {
+    height: 100%;
+    min-height: 0;
+    overflow-y: auto;
+}
+
+/* Right panel: make wrapper fill height and allow content to scroll independently */
+.right.wrapper {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 :deep(.el-cascader-menu) {
@@ -533,8 +550,9 @@
     }
 }
 .content-container {
-    height: calc(100vh - 0px);
-    overflow-y: scroll;
+    flex: 1 1 0;
+    min-height: 0;
+    overflow-y: auto;
     overflow-x: hidden;
     scrollbar-gutter: stable;
     word-wrap: break-word;
