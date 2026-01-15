@@ -1,7 +1,6 @@
 <template>
     <div v-if="Object.keys(buttons).length" class="barWrapper" :class="{opened: activeTab?.length > 0}">
-        <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
-
+        <!-- Removed custom resizer button; ElSplitter will provide drag handle -->
         <el-button
             v-for="(button, key) of {...buttons, ...props.additionalButtons}"
             :key="key"
@@ -35,25 +34,42 @@
             <WeatherSunny v-else />
         </el-button>
     </div>
-    <div class="panelWrapper" ref="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
-        <div :style="{overflow: 'hidden'}">
-            <button v-if="activeTab.length" class="closeButton" @click="setActiveTab('')">
-                <Close />
-            </button>
-            <KeepAlive v-if="activeTab">
-                <ContextDocs v-if="activeTab === 'docs'" />
-                <ContextNews v-else-if="activeTab === 'news'" />
-                <template v-else>
-                    {{ activeTab }}
-                </template>
-            </KeepAlive>
-        </div>
-    </div>
+
+    <!-- Use Element Plus Splitter to control panel width when a tab is open -->
+    <ElSplitter
+        v-if="activeTab.length"
+        class="panelWrapper"
+        layout="horizontal"
+        style="height: 100vh;"
+    >
+        <!-- Left filler: represents the main page content; not resizable -->
+        <ElSplitterPanel :resizable="false" />
+
+        <!-- Right panel: context panel, resizable via splitter -->
+        <ElSplitterPanel
+            v-model:size="panelWidth"
+            :min="50"
+            max="50%"
+        >
+            <div :style="{overflow: 'hidden'}">
+                <button class="closeButton" @click="setActiveTab('')">
+                    <Close />
+                </button>
+                <KeepAlive v-if="activeTab">
+                    <ContextDocs v-if="activeTab === 'docs'" />
+                    <ContextNews v-else-if="activeTab === 'news'" />
+                    <template v-else>
+                        {{ activeTab }}
+                    </template>
+                </KeepAlive>
+            </div>
+        </ElSplitterPanel>
+    </ElSplitter>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, type Ref, type Component, PropType} from "vue";
-    import {useMouse, watchThrottled, useStorage} from "@vueuse/core"
+    import {computed, ref, type Component, PropType} from "vue";
+    import {useStorage} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
     import DateAgo from "./layout/DateAgo.vue"
@@ -66,6 +82,7 @@
     import Utils from "../utils/utils";
     import {useApiStore} from "../stores/api";
     import {useMiscStore} from "override/stores/misc";
+    import {ElSplitter, ElSplitterPanel} from "element-plus";
 
     import {useContextButtons} from "override/composables/contextButtons";
     const {buttons} = useContextButtons();
@@ -97,42 +114,8 @@
         }
     });
 
+    // Initial width in pixels; ElSplitter will honor px values for v-model:size
     const panelWidth = ref(640)
-    const panelWrapper = ref<HTMLDivElement | null>(null)
-
-    const {startResizing, resizing} = useResizablePanel(activeTab)
-
-    function useResizablePanel(localActiveTab: Ref<string>) {
-        const {x} = useMouse()
-
-        const resizing = ref(false)
-        const resizingStartPosition = ref(0)
-        const referencePanelWidth = ref(0)
-        const startResizing = () => {
-            resizingStartPosition.value = x.value;
-            referencePanelWidth.value = panelWidth.value;
-            resizing.value = true;
-
-            document.body.addEventListener("mouseup", () => {
-                resizing.value = false;
-            }, {once: true})
-        }
-
-        watchThrottled(x, () => {
-            if(resizing.value){
-                const newPanelWidth = referencePanelWidth.value + (resizingStartPosition.value - x.value);
-                panelWidth.value = Math.min(Math.max(newPanelWidth, 50), window.innerWidth * .5)
-            }
-        }, {throttle:20})
-
-        watch(localActiveTab, (value) => {
-            if(value.length){
-                x.value = 0;
-            }
-        })
-
-        return {startResizing, resizing}
-    }
 
     function setActiveTab(tab: string) {
         if (activeTab.value === tab) {
@@ -153,24 +136,6 @@
 
 <style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
-
-    .barResizer {
-        height: 100vh;
-        width: 5px;
-        position: absolute;
-        top: 0;
-        left: 0;
-        z-index: 1040;
-        background-color: var(--ks-button-background-primary);
-        opacity: 0;
-        transition: opacity .1s;
-        border: none;
-        cursor: col-resize;
-
-        &:hover {
-            opacity: 1;
-        }
-    }
 
     .barWrapper {
         position: relative;
@@ -247,8 +212,7 @@
     }
 
     .panelWrapper {
-        transition: width .1s;
-        width: 0;
+        /* ElSplitter will manage width; keep scroll styling for the right panel */
         position: relative;
         overflow-y: auto;
         &::-webkit-scrollbar {
@@ -263,10 +227,6 @@
             color: var(--ks-content-tertiary);
             background: none;
             border: none;
-        }
-
-        &.panelTabResizing {
-            transition: none;
         }
     }
 </style>
