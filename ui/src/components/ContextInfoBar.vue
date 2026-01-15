@@ -1,61 +1,7 @@
 <template>
-    <el-splitter v-if="Object.keys(buttons).length && activeTab?.length > 0" class="context-splitter">
-        <template #default>
-            <el-splitter-panel :size="panelWidth" min="300px" :max="maxPanelWidth">
-                <div class="panelWrapper">
-                    <div :style="{overflow: 'hidden'}">
-                        <button class="closeButton" @click="setActiveTab('')">
-                            <Close />
-                        </button>
-                        <KeepAlive>
-                            <ContextDocs v-if="activeTab === 'docs'" />
-                            <ContextNews v-else-if="activeTab === 'news'" />
-                            <template v-else>
-                                {{ activeTab }}
-                            </template>
-                        </KeepAlive>
-                    </div>
-                </div>
-            </el-splitter-panel>
-            <el-splitter-panel>
-                <div class="barWrapper opened">
-                    <el-button
-                        v-for="(button, key) of {...buttons, ...props.additionalButtons}"
-                        :key="key"
-                        :type="activeTab === key ? 'primary' : 'default'"
-                        :tag="button.url ? 'a' : 'button'"
-                        :href="button.url"
-                        @click="() => {if(!button.url){ setActiveTab(key as string)}}"
-                        :target="button.url ? '_blank' : undefined"
-                    >
-                        <component :is="button.icon" class="context-button-icon" />{{ button.title }}
-                        <OpenInNew v-if="button.url" class="open-in-new" />
-                        <div v-if="button.hasUnreadMarker === true && hasUnread" class="newsDot" />
-                    </el-button>
+    <div v-if="Object.keys(buttons).length" class="barWrapper" :class="{opened: activeTab?.length > 0}">
+        <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
 
-                    <div style="flex:1" />
-
-                    <el-tooltip
-                        effect="light"
-                        :persistent="false"
-                        transition=""
-                        :hideAfter="0"
-                        :disabled="!miscStore.configs?.commitId"
-                    >
-                        <template #content>
-                            <code>{{ miscStore.configs?.commitId }}</code> <DateAgo v-if="miscStore.configs?.commitDate" :inverted="true" :date="miscStore.configs.commitDate" />
-                        </template>
-                        <span class="versionNumber">{{ miscStore.configs?.version }}</span>
-                    </el-tooltip>
-                    <el-button class="theme-switcher" @click="onSwitchTheme">
-                        <WeatherNight v-if="themeIsDark" />
-                        <WeatherSunny v-else />
-                    </el-button>
-                </div>
-            </el-splitter-panel>
-        </template>
-    </el-splitter>
-    <div v-else-if="Object.keys(buttons).length" class="barWrapper">
         <el-button
             v-for="(button, key) of {...buttons, ...props.additionalButtons}"
             :key="key"
@@ -89,11 +35,25 @@
             <WeatherSunny v-else />
         </el-button>
     </div>
+    <div class="panelWrapper" ref="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
+        <div :style="{overflow: 'hidden'}">
+            <button v-if="activeTab.length" class="closeButton" @click="setActiveTab('')">
+                <Close />
+            </button>
+            <KeepAlive v-if="activeTab">
+                <ContextDocs v-if="activeTab === 'docs'" />
+                <ContextNews v-else-if="activeTab === 'news'" />
+                <template v-else>
+                    {{ activeTab }}
+                </template>
+            </KeepAlive>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, type Component, PropType} from "vue";
-    import {useStorage, useWindowSize} from "@vueuse/core"
+    import {computed, ref, watch, type Ref, type Component, PropType} from "vue";
+    import {useMouse, watchThrottled, useStorage} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
     import DateAgo from "./layout/DateAgo.vue"
@@ -137,10 +97,42 @@
         }
     });
 
-    // Reactive panel sizing
-    const {width: windowWidth} = useWindowSize()
-    const panelWidth = ref("40%")
-    const maxPanelWidth = computed(() => `${Math.floor(windowWidth.value * 0.7)}px`)
+    const panelWidth = ref(640)
+    const panelWrapper = ref<HTMLDivElement | null>(null)
+
+    const {startResizing, resizing} = useResizablePanel(activeTab)
+
+    function useResizablePanel(localActiveTab: Ref<string>) {
+        const {x} = useMouse()
+
+        const resizing = ref(false)
+        const resizingStartPosition = ref(0)
+        const referencePanelWidth = ref(0)
+        const startResizing = () => {
+            resizingStartPosition.value = x.value;
+            referencePanelWidth.value = panelWidth.value;
+            resizing.value = true;
+
+            document.body.addEventListener("mouseup", () => {
+                resizing.value = false;
+            }, {once: true})
+        }
+
+        watchThrottled(x, () => {
+            if(resizing.value){
+                const newPanelWidth = referencePanelWidth.value + (resizingStartPosition.value - x.value);
+                panelWidth.value = Math.min(Math.max(newPanelWidth, 50), window.innerWidth * .5)
+            }
+        }, {throttle:20})
+
+        watch(localActiveTab, (value) => {
+            if(value.length){
+                x.value = 0;
+            }
+        })
+
+        return {startResizing, resizing}
+    }
 
     function setActiveTab(tab: string) {
         if (activeTab.value === tab) {
@@ -162,11 +154,21 @@
 <style scoped lang="scss">
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
-    .context-splitter {
+    .barResizer {
         height: 100vh;
-        
-        :deep(.el-splitter__wrapper) {
-            flex-direction: row-reverse;
+        width: 5px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 1040;
+        background-color: var(--ks-button-background-primary);
+        opacity: 0;
+        transition: opacity .1s;
+        border: none;
+        cursor: col-resize;
+
+        &:hover {
+            opacity: 1;
         }
     }
 
@@ -245,8 +247,8 @@
     }
 
     .panelWrapper {
-        width: 100%;
-        height: 100vh;
+        transition: width .1s;
+        width: 0;
         position: relative;
         overflow-y: auto;
         &::-webkit-scrollbar {
@@ -261,6 +263,10 @@
             color: var(--ks-content-tertiary);
             background: none;
             border: none;
+        }
+
+        &.panelTabResizing {
+            transition: none;
         }
     }
 </style>
