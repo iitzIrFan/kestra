@@ -164,6 +164,7 @@
 
 <script setup lang="ts">
     import {onMounted, computed, ref} from "vue";
+    import {watchDebounced} from "@vueuse/core";
 
     import {useRoute} from "vue-router";
     const route = useRoute();
@@ -340,9 +341,7 @@
                             )?.value ?? "-",
                     },
                 ]),
-            ...(execution.value.trigger?.type ===
-                "io.kestra.plugin.core.flow.Subflow" &&
-                execution.value.trigger?.variables?.executionId
+            ...(execution.value.trigger?.variables?.executionId
                 ? [
                     {
                         icon: History,
@@ -471,6 +470,17 @@
         if (!route.params.id) return;
         loadExecution(route.params.id as string);
     });
+
+    // Refresh the chart when execution ID or timerange changes.
+    // Debounce to avoid flooding the dashboard generator on rapid SSE updates.
+    watchDebounced(
+        () => [execution.value?.id, timerange.value],
+        () => {
+            if (!chartRef.value || !execution.value) return;
+            chartRef.value?.refresh(filters.value as any);
+        },
+        {debounce: 500, maxWait: 1000}
+    );
 
     defineOptions({inheritAttrs: false});
 </script>
