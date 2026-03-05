@@ -96,9 +96,9 @@ class DashboardControllerTest {
                         - ERROR""";
 
         // Create a dashboard
-        Dashboard dashboard = client.toBlocking().retrieve(
+        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         );
         assertThat(dashboard).isNotNull();
         assertThat(dashboard.getId()).isEqualTo("full");
@@ -106,9 +106,9 @@ class DashboardControllerTest {
         assertThat(dashboard.getDescription()).isEqualTo("Default overview dashboard");
 
         // Get a dashboard
-        Dashboard get = client.toBlocking().retrieve(
+        DashboardController.DashboardResponse get = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/" + dashboard.getId()),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         );
         assertThat(get).isNotNull();
         assertThat(get.getId()).isEqualTo(dashboard.getId());
@@ -117,9 +117,9 @@ class DashboardControllerTest {
             title: Some Dashboard""");
 
         // List dashboards
-        List<Dashboard> dashboards = client.toBlocking().retrieve(
+        List<DashboardController.DashboardResponse> dashboards = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH),
-            Argument.listOf(Dashboard.class)
+            Argument.listOf(DashboardController.DashboardResponse.class)
         );
         assertThat(dashboards).hasSize(1);
 
@@ -186,9 +186,9 @@ class DashboardControllerTest {
         assertThat(repositoryDashboard.getSourceCode()).doesNotContain("id: " + dashboardId);
 
         // Get a dashboard
-        Dashboard get = client.toBlocking().retrieve(
+        DashboardController.DashboardResponse get = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/" + dashboardId),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         );
         assertThat(get).isNotNull();
         assertThat(get.getId()).isEqualTo(dashboardId);
@@ -235,12 +235,12 @@ class DashboardControllerTest {
 
         client.toBlocking().retrieve(
             POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         );
 
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         ));
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
         assertThat(httpClientResponseException.getMessage()).isEqualTo("Invalid entity: dashboard.id: Dashboard id already exists");
@@ -285,18 +285,18 @@ class DashboardControllerTest {
                         - ERROR""";
 
         // Create a dashboard
-        Dashboard dashboard = client.toBlocking().retrieve(
+        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         );
         assertThat(dashboard).isNotNull();
         assertThat(dashboard.getId()).isNotNull();
         assertThat(dashboard.getTitle()).isEqualTo("Some Dashboard");
         assertThat(dashboard.getDescription()).isEqualTo("Default overview dashboard");
 
-        Dashboard get = client.toBlocking().retrieve(
+        DashboardController.DashboardResponse get = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/" + dashboard.getId()),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         );
         assertThat(get).isNotNull();
         assertThat(dashboard.getDescription()).isEqualTo("Default overview dashboard");
@@ -304,27 +304,27 @@ class DashboardControllerTest {
         // Update a dashboard
         dashboard = client.toBlocking().retrieve(
             PUT(DASHBOARD_PATH + "/" + dashboard.getId(), dashboardYaml.replace("Default overview dashboard", "Another description")).contentType(MediaType.APPLICATION_YAML),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         );
         assertThat(dashboard).isNotNull();
 
         get = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/" + dashboard.getId()),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         );
         assertThat(get).isNotNull();
         assertThat(dashboard.getDescription()).isEqualTo("Another description");
 
-        Dashboard finalDashboard = dashboard;
+        DashboardController.DashboardResponse finalDashboard = dashboard;
         HttpClientResponseException httpStatusException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             PUT(DASHBOARD_PATH + "/" + finalDashboard.getId(), dashboardYaml.replace(finalDashboard.getId(), finalDashboard.getId() + "-updated")).contentType(MediaType.APPLICATION_YAML)
-            , Dashboard.class));
+            , DashboardController.DashboardResponse.class));
         assertThat(httpStatusException.getStatus().getCode()).isEqualTo(422);
         assertThat(httpStatusException.getMessage()).isEqualTo("Invalid entity: dashboard.id: Illegal dashboard id update");
 
         get = client.toBlocking().retrieve(
             GET(DASHBOARD_PATH + "/" + dashboard.getId()),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         );
         assertThat(get).isNotNull();
         assertThat(dashboard.getSourceCode()).contains("id: " + dashboard.getId());
@@ -371,7 +371,7 @@ class DashboardControllerTest {
         // Create a dashboard
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         ));
         assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(422);
         assertThat(httpClientResponseException.getMessage()).isEqualTo("Illegal argument: Dashboard id is mandatory");
@@ -421,9 +421,9 @@ class DashboardControllerTest {
             """.formatted(fakeNamespace, fakeExecutionId);
 
         // Create a dashboard
-        Dashboard dashboard = client.toBlocking().retrieve(
+        DashboardController.DashboardResponse dashboard = client.toBlocking().retrieve(
             POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
-            Dashboard.class
+            DashboardController.DashboardResponse.class
         );
         assertThat(dashboard).isNotNull();
         assertThat(dashboard.getId()).isNotNull();
