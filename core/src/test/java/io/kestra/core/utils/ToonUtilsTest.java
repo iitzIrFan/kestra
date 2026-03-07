@@ -116,8 +116,8 @@ class ToonUtilsTest {
 
         // Should use tabular format
         assertThat(toon, containsString("users[2]{id,name}:"));
-        assertThat(toon, containsString("1,Alice"));
-        assertThat(toon, containsString("2,Bob"));
+        assertThat(toon, containsString(" 1,Alice"));
+        assertThat(toon, containsString(" 2,Bob"));
     }
 
     @Test
@@ -151,7 +151,7 @@ class ToonUtilsTest {
         String json = """
             {
               "string": "hello",
-              "number": 42,
+              "numberAsString": 42,
               "decimal": 3.14,
               "boolean": true,
               "nullValue": null
@@ -162,7 +162,7 @@ class ToonUtilsTest {
         String toon = ToonUtils.jsonToToon(node);
 
         assertThat(toon, containsString("string: hello"));
-        assertThat(toon, containsString("number: 42"));
+        assertThat(toon, containsString("numberAsString: 42"));
         assertThat(toon, containsString("decimal: 3.14"));
         assertThat(toon, containsString("boolean: true"));
         assertThat(toon, containsString("nullValue: null"));
@@ -377,6 +377,7 @@ class ToonUtilsTest {
         // Keys with dashes and spaces should be quoted
         assertThat(toon, containsString("\"with-dash\": value"));
         assertThat(toon, containsString("\"with space\": value"));
+        assertThat(toon, containsString("\"$special\": value"));
     }
 
     @Test
