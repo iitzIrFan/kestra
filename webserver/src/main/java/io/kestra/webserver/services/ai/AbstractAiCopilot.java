@@ -8,6 +8,7 @@ import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.exceptions.AiException;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.utils.ToonUtils;
 import io.kestra.core.utils.Version;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,8 +94,9 @@ public abstract class AbstractAiCopilot {
         minifySchema(minifiedSchema);
         String jsonSchemaString;
         try {
-            jsonSchemaString = JacksonMapper.ofJson().writeValueAsString(minifiedSchema);
-        } catch (JsonProcessingException e) {
+            // Convert JSON schema to TOON format for token reduction
+            jsonSchemaString = ToonUtils.jsonToToon(minifiedSchema);
+        } catch (IllegalArgumentException e) {
             throw new AiException(generationError);
         }
 
