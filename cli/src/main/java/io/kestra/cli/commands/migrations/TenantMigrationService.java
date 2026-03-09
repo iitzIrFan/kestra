@@ -26,14 +26,16 @@ public class TenantMigrationService {
     @Inject
     private BroadcastQueueInterface<FlowInterface> flowQueue;
 
-    public void migrateTenant(String tenantId, String tenantName, boolean dryRun) {
+    public void migrateTenant(String tenantId, String tenantName, boolean dryRun, boolean restoreQueue) {
         if (StringUtils.isNotBlank(tenantId) && !MAIN_TENANT.equals(tenantId)){
             throw new KestraRuntimeException("Tenant configuration is an enterprise feature. It can only be main in OSS");
         }
 
         Log.info("🔁 Starting tenant migration...");
         tenantMigrationInterface.migrateTenant(MAIN_TENANT, dryRun);
-        migrateQueue(dryRun);
+        if (restoreQueue) {
+            migrateQueue(dryRun);
+        }
     }
 
     protected void migrateQueue(boolean dryRun) {
