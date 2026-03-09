@@ -92,15 +92,15 @@ public abstract class AbstractAiCopilot {
     ) {
         JsonNode minifiedSchema = JacksonMapper.ofJson().convertValue(jsonSchemaGenerator.schemas(modelClass, false, mostRelevantPluginTypes, true), JsonNode.class);
         minifySchema(minifiedSchema);
-        String jsonSchemaString;
+        String jsonSchemaToToon;
         try {
             // Convert JSON schema to TOON format for token reduction
-            jsonSchemaString = ToonUtils.jsonToToon(minifiedSchema);
+            jsonSchemaToToon = ToonUtils.jsonToToon(minifiedSchema);
         } catch (IllegalArgumentException e) {
             throw new AiException(generationError);
         }
 
-        String yaml = builderFn.build(jsonSchemaString, generationError, userPrompt);
+        String yaml = builderFn.build(jsonSchemaToToon, generationError, userPrompt);
         if (possibleErrorMessages != null && possibleErrorMessages.contains(yaml)) {
             throw new AiException(yaml);
         }

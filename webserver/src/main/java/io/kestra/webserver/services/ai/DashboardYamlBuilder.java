@@ -6,7 +6,7 @@ import dev.langchain4j.service.V;
 
 public interface DashboardYamlBuilder {
     @SystemMessage("""
-        You are an expert in generating Kestra Dashboard YAML. Your task is to generate a valid Kestra Dashboard YAML that follows user's requirements strictly following the following json schema:
+        You are an expert in generating Kestra Dashboard YAML. Your task is to generate a valid Kestra Dashboard YAML that follows user's requirements strictly using the following json schema (when provided, in toon format):
         ```
         {_{dashboardSchema}_}
         ```
