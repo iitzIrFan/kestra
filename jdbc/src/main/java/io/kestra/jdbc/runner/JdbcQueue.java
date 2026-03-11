@@ -23,6 +23,7 @@ import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.exception.DataException;
@@ -74,8 +75,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     private final boolean immediateRepoll;
 
-    private final AtomicBoolean isClosed = new AtomicBoolean(false);
-    private final AtomicBoolean isPaused = new AtomicBoolean(false);
+    private final AtomicBoolean running = new AtomicBoolean(true);
+    private final AtomicBoolean stopped = new AtomicBoolean(false);
+    private final AtomicBoolean paused = new AtomicBoolean(false);
 
     private final Counter bigMessageCounter;
 
@@ -117,7 +119,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
             // we let terminated execution messages to go through anyway
             if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
-                    throw new MessageTooBigException("Message of size " + bytes.length + " has exceeded the configured limit of " + messageProtectionConfiguration.limit);
+                throw new MessageTooBigException("Message of size " + bytes.length + " has exceeded the configured limit of " + messageProtectionConfiguration.limit);
             }
         }
 
@@ -437,14 +439,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @SuppressWarnings("BusyWait")
     protected Runnable poll(Supplier<Integer> runnable) {
-        AtomicBoolean running = new AtomicBoolean(true);
-
         poolExecutor.execute(() -> {
             List<Configuration.Step> steps = configuration.computeSteps();
             Duration sleep = configuration.minPollInterval;
             ZonedDateTime lastPoll = ZonedDateTime.now();
-            while (running.get() && !this.isClosed.get()) {
-                if (!this.isPaused.get()) {
+            while (this.running.get()) {
+                if (!this.paused.get()) {
                     try {
                         Integer count = runnable.get();
                         if (count > 0) {
@@ -476,15 +476,29 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                     }
                 }
 
-                try {
-                    Thread.sleep(sleep);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
+                if (this.running.get()) {
+                    try {
+                        Thread.sleep(sleep);
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
             }
+
+            stopped.set(true);
         });
 
-        return () -> running.set(false);
+        return () -> {
+            running.set(false);
+            try {
+                Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
+                    .pollInterval(Duration.ofMillis(10))
+                    .until(stopped::get);
+            } catch (Exception e) {
+                log.warn("Error while stopping polling", e);
+            }
+        };
     }
 
     protected List<Either<T, DeserializationException>> map(Result<Record> fetch) {
@@ -505,18 +519,25 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public void pause() {
-        this.isPaused.set(true);
+        this.paused.set(true);
     }
 
     @Override
     public void resume() {
-        this.isPaused.set(false);
+        this.paused.set(false);
     }
 
     @Override
     public void close() throws IOException {
-        if (!this.isClosed.compareAndSet(false, true)) {
-            return;
+        if (this.running.compareAndSet(true, false)) {
+            try {
+                Awaitility.await()
+                    .atMost(Duration.ofSeconds(30))
+                    .pollInterval(Duration.ofMillis(10))
+                    .until(stopped::get);
+            } catch (Exception e) {
+                log.warn("Error while stopping polling", e);
+            }
         }
         this.poolExecutor.shutdown();
         this.asyncPoolExecutor.shutdown();
