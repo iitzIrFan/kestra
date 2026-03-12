@@ -533,10 +533,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             try {
                 Awaitility.await()
                     .atMost(Duration.ofSeconds(30))
-                    .pollInterval(Duration.ofMillis(10))
                     .until(stopped::get);
             } catch (Exception e) {
-                log.warn("Error while stopping polling", e);
+                log.warn("Error while closing queue", e);
             }
         }
         this.poolExecutor.shutdown();
