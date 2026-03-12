@@ -529,14 +529,15 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public void close() throws IOException {
-        if (this.running.compareAndSet(true, false)) {
-            try {
-                Awaitility.await()
-                    .atMost(Duration.ofSeconds(30))
-                    .until(stopped::get);
-            } catch (Exception e) {
-                log.warn("Error while closing queue", e);
-            }
+        if (this.running.get()) {
+            this.running.set(false);
+        }
+        try {
+            Awaitility.await()
+                .atMost(Duration.ofSeconds(30))
+                .until(stopped::get);
+        } catch (Exception e) {
+            log.warn("Error while closing queue", e);
         }
         this.poolExecutor.shutdown();
         this.asyncPoolExecutor.shutdown();
