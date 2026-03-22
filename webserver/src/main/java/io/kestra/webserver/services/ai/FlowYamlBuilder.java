@@ -1,4 +1,4 @@
-package io.kestra.webserver.services.ai;
+package io.kestra.libs.copilot.services.ai;
 
 import dev.langchain4j.service.SystemMessage;
 import dev.langchain4j.service.UserMessage;
