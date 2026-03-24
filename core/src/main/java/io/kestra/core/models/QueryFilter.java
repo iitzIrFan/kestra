@@ -500,6 +500,12 @@ public record QueryFilter(
                     Field.TYPE
                 );
             }
+        },
+        SERVICE_INSTANCE {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.STATE, Field.TYPE, Field.CREATED);
+            }
         };
 
         public abstract List<Field> supportedField();
