@@ -1,5 +1,8 @@
 package io.kestra.plugin.core.flow;
 
+import java.util.List;
+import java.util.Optional;
+
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -17,14 +20,11 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.ListUtils;
+
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-
-import jakarta.validation.constraints.NotNull;
-import java.util.List;
-import java.util.Optional;
 
 @SuperBuilder
 @ToString
@@ -129,7 +129,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
     @Schema(
         title = "The list of values for this task",
         description = "The value can be passed as a string, a list of strings, or a list of objects.",
-        oneOf = {String.class, Object[].class}
+        oneOf = { String.class, Object[].class }
     )
     private Object value;
 

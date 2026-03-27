@@ -1,5 +1,16 @@
 package io.kestra.core.storages.kv;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
+
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
@@ -9,24 +20,10 @@ import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
-import io.kestra.core.utils.ListUtils;
+
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.function.Function;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -48,8 +45,8 @@ public class InternalKVStore implements KVStore {
      * Creates a new {@link InternalKVStore} instance.
      *
      * @param namespace The namespace
-     * @param tenant    The tenant.
-     * @param storage   The storage.
+     * @param tenant The tenant.
+     * @param storage The storage.
      */
     public InternalKVStore(@Nullable final String tenant, @Nullable final String namespace, final StorageInterface storage, final KvMetadataRepositoryInterface kvMetadataRepository) {
         this.namespace = namespace;
@@ -74,25 +71,32 @@ public class InternalKVStore implements KVStore {
         KVStore.validateKey(key);
 
         if (!overwrite && exists(key)) {
-            throw new KVStoreException(String.format(
-                "Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.", key));
+            throw new KVStoreException(
+                String.format(
+                    "Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.", key
+                )
+            );
         }
 
         Object actualValue = value.value();
         byte[] serialized = actualValue instanceof Duration ? actualValue.toString().getBytes(StandardCharsets.UTF_8) : JacksonMapper.ofIon().writeValueAsBytes(actualValue);
 
-        PersistedKvMetadata saved = this.kvMetadataRepository.save(PersistedKvMetadata.builder()
-            .tenantId(this.tenant)
-            .namespace(this.namespace)
-            .name(key)
-            .description(Optional.ofNullable(value.metadata()).map(KVMetadata::getDescription).orElse(null))
-            .expirationDate(Optional.ofNullable(value.metadata()).map(KVMetadata::getExpirationDate).orElse(null))
-            .deleted(false)
-            .build());
-        this.storage.put(this.tenant, this.namespace, this.storageUri(key, saved.getVersion()), new StorageObject(
-            value.metadataAsMap(),
-            new ByteArrayInputStream(serialized)
-        ));
+        PersistedKvMetadata saved = this.kvMetadataRepository.save(
+            PersistedKvMetadata.builder()
+                .tenantId(this.tenant)
+                .namespace(this.namespace)
+                .name(key)
+                .description(Optional.ofNullable(value.metadata()).map(KVMetadata::getDescription).orElse(null))
+                .expirationDate(Optional.ofNullable(value.metadata()).map(KVMetadata::getExpirationDate).orElse(null))
+                .deleted(false)
+                .build()
+        );
+        this.storage.put(
+            this.tenant, this.namespace, this.storageUri(key, saved.getVersion()), new StorageObject(
+                value.metadataAsMap(),
+                new ByteArrayInputStream(serialized)
+            )
+        );
     }
 
     /**
@@ -100,7 +104,8 @@ public class InternalKVStore implements KVStore {
      */
     @Override
     public Optional<KVValue> getValue(String key) throws IOException, ResourceExpiredException {
-        return this.getRawValue(key).map(throwFunction(raw -> {
+        return this.getRawValue(key).map(throwFunction(raw ->
+        {
             Object value = JacksonMapper.ofIon().readValue(raw, Object.class);
             if (value instanceof String valueStr && DURATION_PATTERN.matcher(valueStr).matches()) {
                 return new KVValue(Duration.parse(valueStr));
@@ -205,7 +210,8 @@ public class InternalKVStore implements KVStore {
 
         long actualDeletedEntries = kvEntries.stream()
             .map(entry -> this.storageUri(entry.key(), entry.version()))
-            .map(throwFunction(uri -> {
+            .map(throwFunction(uri ->
+            {
                 boolean deleted = this.storage.delete(tenant, namespace, uri);
                 URI metadataURI = URI.create(uri.getPath() + ".metadata");
                 if (this.storage.exists(this.tenant, this.namespace, metadataURI)) {

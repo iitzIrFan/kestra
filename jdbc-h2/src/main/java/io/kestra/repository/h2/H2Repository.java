@@ -1,14 +1,10 @@
 package io.kestra.repository.h2;
 
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.jdbc.JdbcTableConfig;
-import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.jdbc.repository.AbstractJdbcRepository;
-import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Parameter;
-import io.micronaut.data.model.Pageable;
-import jakarta.inject.Inject;
-import lombok.SneakyThrows;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -19,11 +15,17 @@ import org.jooq.Result;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.jdbc.JdbcTableConfig;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+import io.kestra.jdbc.repository.AbstractJdbcRepository;
+
+import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
+import jakarta.inject.Inject;
+import lombok.SneakyThrows;
 
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
 
@@ -33,7 +35,7 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
 
     @Inject
     public H2Repository(@Parameter JdbcTableConfig jdbcTableConfig,
-                        JooqDSLContextWrapper dslContextWrapper) {
+        JooqDSLContextWrapper dslContextWrapper) {
         super(jdbcTableConfig, dslContextWrapper);
     }
 
@@ -53,7 +55,7 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
             .execute();
 
         if (affectedRows == 0) {
-           return  context
+            return context
                 .insertInto(table)
                 .set(KEY_FIELD, key(entity))
                 .set(fields)
@@ -65,7 +67,8 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
 
     @Override
     public int persistBatch(List<T> items) {
-        return dslContextWrapper.transactionResult(configuration -> {
+        return dslContextWrapper.transactionResult(configuration ->
+        {
             DSLContext dslContext = DSL.using(configuration);
             return items.stream()
                 .map(item -> this.persistInternal(item, dslContext, this.persistFields(item)))
@@ -76,7 +79,8 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
 
     @Override
     public int persistBatch(Map<T, Map<Field<Object>, Object>> itemWithFields) {
-        return dslContextWrapper.transactionResult(configuration -> {
+        return dslContextWrapper.transactionResult(configuration ->
+        {
             DSLContext dslContext = DSL.using(configuration);
             return itemWithFields.entrySet().stream()
                 .map(entry -> this.persistInternal(entry.getKey(), dslContext, entry.getValue()))
@@ -111,14 +115,15 @@ public class H2Repository<T> extends io.kestra.jdbc.AbstractJdbcRepository<T> {
     @SuppressWarnings("unchecked")
     public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper) {
         Result<Record> results = this.limit(
-                context.select(DSL.asterisk(), DSL.count().over().as("total_count"))
-                    .from(this
+            context.select(DSL.asterisk(), DSL.count().over().as("total_count"))
+                .from(
+                    this
                         .sort(select, pageable)
                         .asTable("page")
-                    )
-                    .where(DSL.trueCondition()),
-                pageable
-            )
+                )
+                .where(DSL.trueCondition()),
+            pageable
+        )
             .fetch();
 
         Integer totalCount = !results.isEmpty() ? results.getFirst().get("total_count", Integer.class) : 0;

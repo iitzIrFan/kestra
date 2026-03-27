@@ -1,27 +1,27 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.services.PluginDefaultService;
-import jakarta.annotation.PreDestroy;
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.FlowListenersInterface;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.services.FlowListenersInterface;
+import io.kestra.core.services.PluginDefaultService;
+
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Slf4j
@@ -38,8 +38,7 @@ public class FlowListeners implements FlowListenersInterface {
     public FlowListeners(
         FlowRepositoryInterface flowRepository,
         @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<FlowInterface> flowQueue,
-        PluginDefaultService pluginDefaultService
-    ) {
+        PluginDefaultService pluginDefaultService) {
         this.flowQueue = flowQueue;
         this.flows = new ArrayList<>(flowRepository.findAllWithSourceForAllTenants());
         this.pluginDefaultService = pluginDefaultService;
@@ -49,7 +48,8 @@ public class FlowListeners implements FlowListenersInterface {
     public void run() {
         synchronized (this) {
             if (queueListenerCancellation == null) {
-                queueListenerCancellation = this.flowQueue.receive(either -> {
+                queueListenerCancellation = this.flowQueue.receive(either ->
+                {
                     FlowWithSource flow;
                     if (either.isRight()) {
                         flow = FlowWithException.from(either.getRight().getRecord(), either.getRight(), log).orElse(null);

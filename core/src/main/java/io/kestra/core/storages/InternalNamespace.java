@@ -1,16 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.models.FetchVersion;
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
-import io.micronaut.data.model.Pageable;
-import jakarta.annotation.Nullable;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +9,19 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+
+import io.kestra.core.models.FetchVersion;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.namespaces.files.NamespaceFileMetadata;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.core.repositories.NamespaceFileMetadataRepositoryInterface;
+
+import io.micronaut.data.model.Pageable;
+import jakarta.annotation.Nullable;
+import lombok.extern.slf4j.Slf4j;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -44,21 +46,23 @@ public class InternalNamespace implements Namespace {
      * Creates a new {@link InternalNamespace} instance.
      *
      * @param namespace The namespace
-     * @param storage   The storage.
+     * @param storage The storage.
      */
-    public InternalNamespace(@Nullable final String tenant, final String namespace, final StorageInterface storage, final NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository) {
+    public InternalNamespace(@Nullable final String tenant, final String namespace, final StorageInterface storage,
+        final NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepository) {
         this(log, tenant, namespace, storage, namespaceFileMetadataRepository);
     }
 
     /**
      * Creates a new {@link InternalNamespace} instance.
      *
-     * @param logger    The logger to be used by this class.
+     * @param logger The logger to be used by this class.
      * @param namespace The namespace
-     * @param tenant    The tenant.
-     * @param storage   The storage.
+     * @param tenant The tenant.
+     * @param storage The storage.
      */
-    public InternalNamespace(final Logger logger, @Nullable final String tenant, final String namespace, final StorageInterface storage, final NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepositoryInterface) {
+    public InternalNamespace(final Logger logger, @Nullable final String tenant, final String namespace, final StorageInterface storage,
+        final NamespaceFileMetadataRepositoryInterface namespaceFileMetadataRepositoryInterface) {
         this.logger = Objects.requireNonNull(logger, "logger cannot be null");
         this.namespace = Objects.requireNonNull(namespace, "namespace cannot be null");
         this.storage = Objects.requireNonNull(storage, "storage cannot be null");
@@ -71,9 +75,11 @@ public class InternalNamespace implements Namespace {
         return namespaceFileMetadataRepository.find(
             pageable,
             tenant,
-            Stream.concat(filters.stream(), Stream.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()
-            )).toList(),
+            Stream.concat(
+                filters.stream(), Stream.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()
+                )
+            ).toList(),
             allowDeleted,
             fetchVersion
         ).map(throwFunction(NamespaceFile::fromMetadata));
@@ -105,22 +111,26 @@ public class InternalNamespace implements Namespace {
      **/
     @Override
     public List<NamespaceFile> all(final String containing, boolean includeDirectories) throws IOException {
-        List<NamespaceFileMetadata> namespaceFilesMetadata = namespaceFileMetadataRepository.find(Pageable.UNPAGED, tenant, Stream.concat(
-            Stream.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()),
-            Optional.ofNullable(containing).flatMap(p -> {
-                if (p.equals("/")) {
-                    return Optional.empty();
-                }
+        List<NamespaceFileMetadata> namespaceFilesMetadata = namespaceFileMetadataRepository.find(
+            Pageable.UNPAGED, tenant, Stream.concat(
+                Stream.of(QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build()),
+                Optional.ofNullable(containing).flatMap(p ->
+                {
+                    if (p.equals("/")) {
+                        return Optional.empty();
+                    }
 
-                return Optional.of(QueryFilter.builder().field(QueryFilter.Field.QUERY).operation(QueryFilter.Op.EQUALS).value(p).build());
-            }).stream()
-        ).toList(), false);
+                    return Optional.of(QueryFilter.builder().field(QueryFilter.Field.QUERY).operation(QueryFilter.Op.EQUALS).value(p).build());
+                }).stream()
+            ).toList(), false
+        );
 
         if (!includeDirectories) {
             namespaceFilesMetadata = namespaceFilesMetadata.stream().filter(nsFileMetadata -> !nsFileMetadata.isDirectory()).toList();
         }
 
-        return namespaceFilesMetadata.stream().filter(nsFileMetadata -> !nsFileMetadata.getPath().equals("/")).map(nsFileMetadata -> NamespaceFile.of(namespace, Path.of(nsFileMetadata.getPath()), nsFileMetadata.getVersion())).toList();
+        return namespaceFilesMetadata.stream().filter(nsFileMetadata -> !nsFileMetadata.getPath().equals("/"))
+            .map(nsFileMetadata -> NamespaceFile.of(namespace, Path.of(nsFileMetadata.getPath()), nsFileMetadata.getVersion())).toList();
     }
 
     /**
@@ -130,14 +140,16 @@ public class InternalNamespace implements Namespace {
     public List<NamespaceFileMetadata> children(String parentPath, boolean recursive) throws IOException {
         final String normalizedParentPath = NamespaceFile.normalize(Path.of(parentPath)).toString();
 
-        return namespaceFileMetadataRepository.find(Pageable.UNPAGED, tenant, List.of(
-            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
-            QueryFilter.builder()
-                .field(QueryFilter.Field.PARENT_PATH)
-                .operation(recursive ? QueryFilter.Op.STARTS_WITH : QueryFilter.Op.EQUALS)
-                .value(normalizedParentPath.endsWith("/") ? normalizedParentPath : normalizedParentPath + "/")
-                .build()
-        ), false);
+        return namespaceFileMetadataRepository.find(
+            Pageable.UNPAGED, tenant, List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
+                QueryFilter.builder()
+                    .field(QueryFilter.Field.PARENT_PATH)
+                    .operation(recursive ? QueryFilter.Op.STARTS_WITH : QueryFilter.Op.EQUALS)
+                    .value(normalizedParentPath.endsWith("/") ? normalizedParentPath : normalizedParentPath + "/")
+                    .build()
+            ), false
+        );
     }
 
     @Override
@@ -146,27 +158,33 @@ public class InternalNamespace implements Namespace {
         final Path normalizedTarget = NamespaceFile.normalize(target);
 
         if (exists(normalizedTarget)) {
-            throw new IOException(String.format(
-                "File '%s' already exists in namespace '%s'.",
-                normalizedTarget,
-                namespace
-            ));
+            throw new IOException(
+                String.format(
+                    "File '%s' already exists in namespace '%s'.",
+                    normalizedTarget,
+                    namespace
+                )
+            );
         }
 
         // Get all metadata for source and its descendants, all versions
-        ArrayListTotal<NamespaceFileMetadata> sourceMetas = namespaceFileMetadataRepository.find(Pageable.UNPAGED, tenant, List.of(
-            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
-            QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.IN).value(List.of(normalizedSource.toString(), normalizedSource + "/")).build()
-        ), true, FetchVersion.ALL);
+        ArrayListTotal<NamespaceFileMetadata> sourceMetas = namespaceFileMetadataRepository.find(
+            Pageable.UNPAGED, tenant, List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
+                QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.IN).value(List.of(normalizedSource.toString(), normalizedSource + "/")).build()
+            ), true, FetchVersion.ALL
+        );
 
         List<NamespaceFileMetadata> allMetas = new ArrayList<>(sourceMetas);
         boolean isDirectory = sourceMetas.stream().anyMatch(NamespaceFileMetadata::isDirectory);
         if (isDirectory) {
             String parentPathPrefix = normalizedSource.toString().endsWith("/") ? normalizedSource.toString() : normalizedSource + "/";
-            ArrayListTotal<NamespaceFileMetadata> descendants = namespaceFileMetadataRepository.find(Pageable.UNPAGED, tenant, List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
-                QueryFilter.builder().field(QueryFilter.Field.PARENT_PATH).operation(QueryFilter.Op.STARTS_WITH).value(parentPathPrefix).build()
-            ), true, FetchVersion.ALL);
+            ArrayListTotal<NamespaceFileMetadata> descendants = namespaceFileMetadataRepository.find(
+                Pageable.UNPAGED, tenant, List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
+                    QueryFilter.builder().field(QueryFilter.Field.PARENT_PATH).operation(QueryFilter.Op.STARTS_WITH).value(parentPathPrefix).build()
+                ), true, FetchVersion.ALL
+            );
             allMetas.addAll(descendants);
         }
 
@@ -203,21 +221,26 @@ public class InternalNamespace implements Namespace {
             }
         } catch (Exception e) {
             // Rollback: purge all already-created target entries (longest paths first to handle children before parents)
-            logger.warn("Move from '{}' to '{}' failed after creating {} of {} entries, rolling back.",
-                normalizedSource, normalizedTarget, results.size(), allMetas.size(), e);
+            logger.warn(
+                "Move from '{}' to '{}' failed after creating {} of {} entries, rolling back.",
+                normalizedSource, normalizedTarget, results.size(), allMetas.size(), e
+            );
             results.stream()
                 .sorted(Comparator.comparing((Pair<NamespaceFile, NamespaceFile> p) -> p.getRight().path().length()).reversed())
-                .forEach(pair -> {
+                .forEach(pair ->
+                {
                     try {
                         this.purge(pair.getRight());
                     } catch (IOException rollbackEx) {
                         logger.error("Failed to rollback created file '{}' during move rollback.", pair.getRight().path(), rollbackEx);
                     }
                 });
-            throw new IOException(String.format(
-                "Failed to move '%s' to '%s' in namespace '%s'. All changes have been rolled back.",
-                normalizedSource, normalizedTarget, namespace
-            ), e);
+            throw new IOException(
+                String.format(
+                    "Failed to move '%s' to '%s' in namespace '%s'. All changes have been rolled back.",
+                    normalizedSource, normalizedTarget, namespace
+                ), e
+            );
         }
 
         // Phase 2: All copies succeeded — now purge the source entries
@@ -283,11 +306,13 @@ public class InternalNamespace implements Namespace {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
         if (version != null) {
-            return namespaceFileMetadataRepository.find(Pageable.from(1, 1), tenant, List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
-                QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.EQUALS).value(normalizedPath.toString()).build(),
-                QueryFilter.builder().field(QueryFilter.Field.VERSION).operation(QueryFilter.Op.EQUALS).value(version).build()
-            ), allowDeleted, FetchVersion.ALL).stream().findFirst();
+            return namespaceFileMetadataRepository.find(
+                Pageable.from(1, 1), tenant, List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
+                    QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.EQUALS).value(normalizedPath.toString()).build(),
+                    QueryFilter.builder().field(QueryFilter.Field.VERSION).operation(QueryFilter.Op.EQUALS).value(version).build()
+                ), allowDeleted, FetchVersion.ALL
+            ).stream().findFirst();
         }
         return namespaceFileMetadataRepository.findByPath(tenant, namespace, normalizedPath.toString())
             .filter(namespaceFileMetadata -> allowDeleted || !namespaceFileMetadata.isDeleted());
@@ -341,11 +366,13 @@ public class InternalNamespace implements Namespace {
                     .build()
             );
 
-            logger.debug(String.format(
-                "File '%s' added to namespace '%s'.",
-                normalizedPath,
-                namespace
-            ));
+            logger.debug(
+                String.format(
+                    "File '%s' added to namespace '%s'.",
+                    normalizedPath,
+                    namespace
+                )
+            );
 
             createdFiles.add(namespaceFile);
         } else if (onAlreadyExist == Conflicts.OVERWRITE || inRepository.get().isDeleted()) {
@@ -358,35 +385,43 @@ public class InternalNamespace implements Namespace {
             );
 
             if (inRepository.get().isDeleted()) {
-                logger.debug(String.format(
-                    "File '%s' added to namespace '%s'.",
-                    normalizedPath,
-                    namespace
-                ));
+                logger.debug(
+                    String.format(
+                        "File '%s' added to namespace '%s'.",
+                        normalizedPath,
+                        namespace
+                    )
+                );
             } else {
-                logger.debug(String.format(
-                    "File '%s' overwritten into namespace '%s'.",
-                    normalizedPath,
-                    namespace
-                ));
+                logger.debug(
+                    String.format(
+                        "File '%s' overwritten into namespace '%s'.",
+                        normalizedPath,
+                        namespace
+                    )
+                );
             }
 
             createdFiles.add(namespaceFile);
         } else {
             // At this point, the file exists and we have to decide what to do based on the conflict strategy
             switch (onAlreadyExist) {
-                case ERROR -> throw new IOException(String.format(
-                    "File '%s' already exists in namespace '%s' and conflict is set to %s",
-                    normalizedPath,
-                    namespace,
-                    Conflicts.ERROR
-                ));
-                case SKIP -> logger.debug(String.format(
-                    "File '%s' already exists in namespace '%s' and conflict is set to %s. Skipping.",
-                    normalizedPath,
-                    namespace,
-                    Conflicts.SKIP
-                ));
+                case ERROR -> throw new IOException(
+                    String.format(
+                        "File '%s' already exists in namespace '%s' and conflict is set to %s",
+                        normalizedPath,
+                        namespace,
+                        Conflicts.ERROR
+                    )
+                );
+                case SKIP -> logger.debug(
+                    String.format(
+                        "File '%s' already exists in namespace '%s' and conflict is set to %s. Skipping.",
+                        normalizedPath,
+                        namespace,
+                        Conflicts.SKIP
+                    )
+                );
             }
         }
 
@@ -437,10 +472,12 @@ public class InternalNamespace implements Namespace {
     public List<NamespaceFile> delete(Path path) throws IOException {
         final Path normalizedPath = NamespaceFile.normalize(path);
 
-        Optional<NamespaceFileMetadata> maybeNamespaceFileMetadata = namespaceFileMetadataRepository.find(Pageable.from(1, 1), tenant, List.of(
-            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
-            QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.IN).value(List.of(normalizedPath.toString(), normalizedPath + "/")).build()
-        ), false).stream().findFirst();
+        Optional<NamespaceFileMetadata> maybeNamespaceFileMetadata = namespaceFileMetadataRepository.find(
+            Pageable.from(1, 1), tenant, List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value(namespace).build(),
+                QueryFilter.builder().field(QueryFilter.Field.PATH).operation(QueryFilter.Op.IN).value(List.of(normalizedPath.toString(), normalizedPath + "/")).build()
+            ), false
+        ).stream().findFirst();
 
         List<NamespaceFileMetadata> toDelete = Stream.concat(
             this.children(normalizedPath.toString(), true).stream().map(NamespaceFileMetadata::toDeleted),

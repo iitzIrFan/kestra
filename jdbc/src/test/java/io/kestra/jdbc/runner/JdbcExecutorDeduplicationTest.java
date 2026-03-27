@@ -1,18 +1,20 @@
 package io.kestra.jdbc.runner;
 
+import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
+
 import com.google.common.hash.Hashing;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.runners.ExecutorState;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
-import java.lang.reflect.Method;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -89,8 +91,7 @@ class JdbcExecutorDeduplicationTest {
         String parentTaskRunId,
         String value,
         List<TaskRunAttempt> attempts,
-        Integer iteration
-    ) {
+        Integer iteration) {
         return TaskRun.builder()
             .tenantId("tenant")
             .id(id)

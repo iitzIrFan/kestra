@@ -1,8 +1,18 @@
 package io.kestra.core.runners;
 
+import java.net.URI;
+import java.security.GeneralSecurityException;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+
+import org.slf4j.Logger;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Plugin;
@@ -12,14 +22,6 @@ import io.kestra.core.models.property.PropertyContext;
 import io.kestra.core.storages.StateStore;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.kv.KVStore;
-import org.slf4j.Logger;
-
-import java.net.URI;
-import java.security.GeneralSecurityException;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 
 @JsonSerialize(using = RunContextSerializer.class)
 public abstract class RunContext implements PropertyContext {
@@ -154,7 +156,7 @@ public abstract class RunContext implements PropertyContext {
      * associated to the current task or trigger.
      *
      * @param name the configuration property name.
-     * @param <T>  the type of the configuration property value.
+     * @param <T> the type of the configuration property value.
      * @return the {@link Optional} configuration property value.
      */
     public abstract <T> Optional<T> pluginConfiguration(String name);
@@ -229,6 +231,7 @@ public abstract class RunContext implements PropertyContext {
 
     /**
      * Clone this run context for a specific plugin.
+     * 
      * @return a new run context with the plugin configuration of the given plugin.
      */
     public abstract RunContext cloneForPlugin(Plugin plugin);

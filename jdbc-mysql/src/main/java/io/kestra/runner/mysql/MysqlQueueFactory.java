@@ -4,6 +4,7 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
 import io.kestra.core.runners.*;
 import io.kestra.jdbc.runner.AbstractJdbcQueueFactory;
+
 import io.micronaut.context.annotation.Factory;
 
 @Factory

@@ -1,5 +1,10 @@
 package io.kestra.jdbc.runner;
 
+import java.time.Duration;
+import java.util.Optional;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -10,11 +15,8 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.AbstractRunnerConcurrencyTest;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.TestRunnerUtils;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.util.Optional;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,7 +36,7 @@ public abstract class JdbcConcurrencyRunnerTest extends AbstractRunnerConcurrenc
     private TestRunnerUtils runnerUtils;
 
     @Test
-    @LoadFlows(value = {"flows/valids/flow-concurrency-queue.yml"}, tenantId = "flow-concurrency-queued-protection")
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue.yml" }, tenantId = "flow-concurrency-queued-protection")
     void flowConcurrencyQueuedProtection() throws QueueException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning("flow-concurrency-queued-protection", NAMESPACE, "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
         assertThat(execution1.getState().isRunning()).isTrue();
@@ -63,7 +65,7 @@ public abstract class JdbcConcurrencyRunnerTest extends AbstractRunnerConcurrenc
     }
 
     @Test
-    @LoadFlows(value = {"flows/valids/flow-concurrency-queue.yml"}, tenantId = "flow-concurrency-scheduled")
+    @LoadFlows(value = { "flows/valids/flow-concurrency-queue.yml" }, tenantId = "flow-concurrency-scheduled")
     void flowConcurrencyScheduled() throws QueueException, InterruptedException {
         Execution execution1 = runnerUtils.runOneUntilRunning("flow-concurrency-scheduled", NAMESPACE, "flow-concurrency-queue", null, null, Duration.ofSeconds(30));
         assertThat(execution1.getState().isRunning()).isTrue();

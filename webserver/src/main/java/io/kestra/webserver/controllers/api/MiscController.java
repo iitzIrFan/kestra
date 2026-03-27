@@ -1,22 +1,29 @@
 package io.kestra.webserver.controllers.api;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Optional;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+
 import io.kestra.core.contexts.KestraConfig;
 import io.kestra.core.models.collectors.ExecutionUsage;
 import io.kestra.core.models.collectors.FlowUsage;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.reporter.Reportable;
 import io.kestra.core.reporter.reports.FeatureUsageReport;
-import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
+import io.kestra.core.runners.pebble.PebbleExpressionService;
 import io.kestra.core.services.InstanceService;
 import io.kestra.core.utils.EditionProvider;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthCredentials;
 import io.kestra.webserver.services.BasicAuthService;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
@@ -35,11 +42,6 @@ import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
-
-import java.time.Duration;
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Controller("/api/v1")
@@ -72,7 +74,7 @@ public class MiscController {
     KestraConfig kestraConfig;
 
     @io.micronaut.context.annotation.Value("${kestra.ui.charts.default-duration:PT24H}")
-private String chartDefaultDuration;
+    private String chartDefaultDuration;
 
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
     protected Boolean isAnonymousUsageEnabled;
@@ -114,10 +116,9 @@ private String chartDefaultDuration;
     @Inject
     PebbleExpressionService pebbleExpressionService;
 
-
     @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
+    @Operation(tags = { "Misc" }, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
     public Configuration getConfiguration() throws JsonProcessingException { // JsonProcessingException might be thrown in EE
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
@@ -130,10 +131,12 @@ private String chartDefaultDuration;
             .isAnonymousUsageEnabled(this.isAnonymousUsageEnabled)
             .isUiAnonymousUsageEnabled(this.isUiAnonymousUsageEnabled)
             .isTemplateEnabled(templateRepository.isPresent())
-            .preview(Preview.builder()
-                .initial(this.initialPreviewRows)
-                .max(this.maxPreviewRows)
-                .build())
+            .preview(
+                Preview.builder()
+                    .initial(this.initialPreviewRows)
+                    .max(this.maxPreviewRows)
+                    .build()
+            )
             .isAiEnabled(applicationContext.containsBean(AiController.class))
             .isBasicAuthInitialized(basicAuthService.map(BasicAuthService::isBasicAuthInitialized).orElse(false))
             .systemNamespace(kestraConfig.getSystemFlowNamespace())
@@ -141,8 +144,7 @@ private String chartDefaultDuration;
             .url(kestraUrl)
             .pluginsHash(pluginRegistry.hash())
             .chartDefaultDuration(this.chartDefaultDuration)
-            .isConcurrencyViewEnabled(!this.queueType.equals("kafka"))
-            ;
+            .isConcurrencyViewEnabled(!this.queueType.equals("kafka"));
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -158,7 +160,7 @@ private String chartDefaultDuration;
 
     @Get("/{tenant}/usages/all")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Retrieve instance usage information")
+    @Operation(tags = { "Misc" }, summary = "Retrieve instance usage information")
     public ApiUsage getUsages() {
         ZonedDateTime now = ZonedDateTime.now();
         FeatureUsageReport.UsageEvent event = featureUsageReport.report(now.toInstant(), Reportable.TimeInterval.of(now.minus(Duration.ofDays(1)), now));
@@ -170,10 +172,9 @@ private String chartDefaultDuration;
 
     @Post(uri = "/{tenant}/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
+    @Operation(tags = { "Misc" }, summary = "Configure basic authentication for the instance.", description = "Sets up basic authentication credentials.")
     public HttpResponse<Void> createBasicAuth(
-        @RequestBody @Body BasicAuthCredentials basicAuthCredentials
-    ) {
+        @RequestBody @Body BasicAuthCredentials basicAuthCredentials) {
         basicAuthService
             .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
             .save(basicAuthCredentials);
@@ -181,10 +182,9 @@ private String chartDefaultDuration;
         return HttpResponse.noContent();
     }
 
-
     @Get("/basicAuthValidationErrors")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
+    @Operation(tags = { "Misc" }, summary = "Retrieve the instance configuration.", description = "Global endpoint available to all users.")
     public List<String> getBasicAuthConfigErrors() {
         return basicAuthService
             .orElseThrow(() -> new IllegalStateException("basicAuthService bean is required in OSS"))
@@ -193,14 +193,14 @@ private String chartDefaultDuration;
 
     @Get("/pebble/filters")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Retrieve the list of available Pebble expression filters.")
+    @Operation(tags = { "Misc" }, summary = "Retrieve the list of available Pebble expression filters.")
     public List<String> getExpressionFilters() {
         return pebbleExpressionService.filters();
     }
 
     @Get("/pebble/functions")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Retrieve the list of available Pebble expression functions.")
+    @Operation(tags = { "Misc" }, summary = "Retrieve the list of available Pebble expression functions.")
     public List<String> getExpressionFunctions() {
         return pebbleExpressionService.functions();
     }

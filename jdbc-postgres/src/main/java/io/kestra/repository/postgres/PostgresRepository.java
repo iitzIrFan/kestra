@@ -1,15 +1,9 @@
 package io.kestra.repository.postgres;
 
-import io.kestra.core.models.HasUID;
-import io.kestra.core.queues.QueueService;
-import io.kestra.core.repositories.ArrayListTotal;
-import io.kestra.jdbc.JdbcTableConfig;
-import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.micronaut.context.annotation.EachBean;
-import io.micronaut.context.annotation.Parameter;
-import io.micronaut.data.model.Pageable;
-import jakarta.inject.Inject;
-import lombok.SneakyThrows;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.Field;
@@ -21,10 +15,16 @@ import org.jooq.Result;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import io.kestra.core.repositories.ArrayListTotal;
+import io.kestra.jdbc.JdbcTableConfig;
+import io.kestra.jdbc.JooqDSLContextWrapper;
+
+import io.micronaut.context.annotation.EachBean;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
+import jakarta.inject.Inject;
+import lombok.SneakyThrows;
 
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.KEY_FIELD;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.VALUE_FIELD;
@@ -35,7 +35,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
 
     @Inject
     public PostgresRepository(@Parameter JdbcTableConfig jdbcTableConfig,
-                              JooqDSLContextWrapper dslContextWrapper) {
+        JooqDSLContextWrapper dslContextWrapper) {
         super(jdbcTableConfig, dslContextWrapper);
     }
 
@@ -63,7 +63,7 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
 
     @SneakyThrows
     @Override
-    public void persist(T entity, DSLContext context, @Nullable  Map<Field<Object>, Object> fields) {
+    public void persist(T entity, DSLContext context, @Nullable Map<Field<Object>, Object> fields) {
         Map<Field<Object>, Object> finalFields = fields == null ? this.persistFields(entity) : fields;
 
         context
@@ -94,9 +94,10 @@ public class PostgresRepository<T> extends io.kestra.jdbc.AbstractJdbcRepository
     public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper) {
         Result<Record> results = this.limit(
             context.select(DSL.asterisk(), DSL.count().over().as("total_count"))
-                .from(this
-                    .sort(select, pageable)
-                    .asTable("page")
+                .from(
+                    this
+                        .sort(select, pageable)
+                        .asTable("page")
                 )
                 .where(DSL.trueCondition()),
             pageable

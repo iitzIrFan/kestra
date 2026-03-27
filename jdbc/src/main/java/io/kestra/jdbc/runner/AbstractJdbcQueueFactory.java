@@ -1,5 +1,7 @@
 package io.kestra.jdbc.runner;
 
+import org.apache.commons.lang3.NotImplementedException;
+
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
@@ -11,20 +13,21 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.queues.WorkerJobQueueInterface;
 import io.kestra.core.runners.*;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Bean;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import org.apache.commons.lang3.NotImplementedException;
 
-
-public abstract class AbstractJdbcQueueFactory implements QueueFactoryInterface<JdbcQueueDependencies>  {
+public abstract class AbstractJdbcQueueFactory implements QueueFactoryInterface<JdbcQueueDependencies> {
     @Inject
     protected ApplicationContext applicationContext;
 
     protected abstract <T> QueueInterface<T> queue(Class<T> clazz);
+
     protected abstract WorkerJobQueueInterface workerJobQueue();
+
     protected abstract QueueInterface<WorkerTriggerResult> workerTriggerResultQueue();
 
     @Override

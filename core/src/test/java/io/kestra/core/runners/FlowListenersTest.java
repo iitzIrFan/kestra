@@ -1,25 +1,25 @@
 package io.kestra.core.runners;
 
+import java.time.Duration;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.junit.jupiter.api.Test;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
-import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.utils.Await;
-import io.kestra.core.utils.TestsUtils;
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.TimeoutException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowListenersInterface;
-import io.kestra.plugin.core.debug.Return;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.plugin.core.debug.Return;
 
-import java.util.Collections;
-import java.util.concurrent.atomic.AtomicInteger;
 import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -38,11 +38,15 @@ abstract public class FlowListenersTest {
             .namespace("io.kestra.unittest")
             .tenantId(tenantId)
             .revision(1)
-            .tasks(Collections.singletonList(Return.builder()
-                .id(taskId)
-                .type(Return.class.getName())
-                .format(Property.ofValue("test"))
-                .build()))
+            .tasks(
+                Collections.singletonList(
+                    Return.builder()
+                        .id(taskId)
+                        .type(Return.class.getName())
+                        .format(Property.ofValue("test"))
+                        .build()
+                )
+            )
             .build();
         return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
     }
@@ -76,7 +80,6 @@ abstract public class FlowListenersTest {
         log.info("-----------> create first flow");
         FlowWithSource first = create(tenant, "first_" + IdUtils.create(), "test");
         FlowWithSource firstUpdated = create(tenant, first.getId(), "test2");
-
 
         flowRepository.create(GenericFlow.of(first));
         Await.until(() -> "Expected to have 1 flow but got " + count.get(), () -> count.get() == 1, Duration.ofMillis(10), Duration.ofSeconds(5));

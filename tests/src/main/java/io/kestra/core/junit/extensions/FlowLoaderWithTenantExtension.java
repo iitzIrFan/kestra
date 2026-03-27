@@ -1,19 +1,23 @@
 package io.kestra.core.junit.extensions;
 
-import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
-import io.kestra.core.utils.TestsUtils;
 import java.net.URISyntaxException;
-import lombok.SneakyThrows;
+
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolutionException;
 import org.junit.jupiter.api.extension.ParameterResolver;
 
+import io.kestra.core.junit.annotations.LoadFlowsWithTenant;
+import io.kestra.core.utils.TestsUtils;
+
+import lombok.SneakyThrows;
+
 public class FlowLoaderWithTenantExtension extends AbstractFlowLoaderExtension implements
     ParameterResolver, AfterEachCallback {
 
     private String tenantId = TestsUtils.randomTenant();
+
     @Override
     public boolean supportsParameter(ParameterContext parameterContext,
         ExtensionContext extensionContext) throws ParameterResolutionException {

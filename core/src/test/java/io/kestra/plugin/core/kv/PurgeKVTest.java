@@ -1,5 +1,17 @@
 package io.kestra.plugin.core.kv;
 
+import java.io.IOException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.ExecutionMode;
+
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.ValidationErrorException;
@@ -18,20 +30,10 @@ import io.kestra.core.storages.kv.KVValueAndMetadata;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.kv.PurgeKV.Output;
+
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.parallel.Execution;
-import org.junit.jupiter.api.parallel.ExecutionMode;
-
-import java.io.IOException;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -57,7 +59,6 @@ public class PurgeKVTest {
     @Inject
     ModelValidator modelValidator;
 
-
     @BeforeEach
     protected void setup() throws IOException {
         flowRepositoryInterface.findAll(MAIN_TENANT).forEach(flow -> flowRepositoryInterface.delete(flow));
@@ -81,7 +82,7 @@ public class PurgeKVTest {
 
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())
-            .namespacePattern(Property.ofValue("*arent*"))  // codespell:ignore
+            .namespacePattern(Property.ofValue("*arent*")) // codespell:ignore
             .build();
         List<String> namespaces = purgeKV.findNamespaces(runContextFactory.of(NAMESPACE));
 
@@ -234,7 +235,6 @@ public class PurgeKVTest {
         kvStore1.put("key_2", new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
         kvStore1.put("not_found", new KVValueAndMetadata(new KVMetadata("unused", Duration.ofMillis(1L)), "unused"));
 
-
         PurgeKV purgeKV = PurgeKV.builder()
             .type(PurgeKV.class.getName())
             .keyPattern(Property.ofValue("*ey*"))
@@ -309,23 +309,33 @@ public class PurgeKVTest {
     @Test
     void validation() throws Exception {
         // valid
-        assertThat(modelValidator.isValid(PurgeKV.builder()
-            .id(IdUtils.create())
-            .type(PurgeKV.class.getName())
-            .behavior(Property.ofValue(Version.builder().before(Instant.now().toString()).build()))
-            .build()).isPresent()).isFalse();
-        assertThat(modelValidator.isValid(PurgeKV.builder()
-            .id(IdUtils.create())
-            .type(PurgeKV.class.getName())
-            .behavior(Property.ofValue(Version.builder().keepAmount(2).build()))
-            .build()).isPresent()).isFalse();
+        assertThat(
+            modelValidator.isValid(
+                PurgeKV.builder()
+                    .id(IdUtils.create())
+                    .type(PurgeKV.class.getName())
+                    .behavior(Property.ofValue(Version.builder().before(Instant.now().toString()).build()))
+                    .build()
+            ).isPresent()
+        ).isFalse();
+        assertThat(
+            modelValidator.isValid(
+                PurgeKV.builder()
+                    .id(IdUtils.create())
+                    .type(PurgeKV.class.getName())
+                    .behavior(Property.ofValue(Version.builder().keepAmount(2).build()))
+                    .build()
+            ).isPresent()
+        ).isFalse();
 
         // invalid
-        Optional<ConstraintViolationException> invalid = modelValidator.isValid(PurgeKV.builder()
-            .id(IdUtils.create())
-            .type(PurgeKV.class.getName())
-            .behavior(Property.ofValue(Version.builder().before(Instant.now().toString()).keepAmount(2).build()))
-            .build());
+        Optional<ConstraintViolationException> invalid = modelValidator.isValid(
+            PurgeKV.builder()
+                .id(IdUtils.create())
+                .type(PurgeKV.class.getName())
+                .behavior(Property.ofValue(Version.builder().before(Instant.now().toString()).keepAmount(2).build()))
+                .build()
+        );
         assertThat(invalid.isPresent()).isTrue();
         assertThat(invalid.get().getMessage()).contains("behavior: Cannot set both 'before' and 'keepAmount' properties");
     }
@@ -337,12 +347,16 @@ public class PurgeKVTest {
     }
 
     private void addNamespace(String namespace) {
-        flowRepositoryInterface.create(GenericFlow.of(Flow.builder()
-            .tenantId(MAIN_TENANT)
-            .namespace(namespace)
-            .id("flow1")
-            .tasks(List.of(PurgeKV.builder().type(PurgeKV.class.getName()).build()))
-            .build()));
+        flowRepositoryInterface.create(
+            GenericFlow.of(
+                Flow.builder()
+                    .tenantId(MAIN_TENANT)
+                    .namespace(namespace)
+                    .id("flow1")
+                    .tasks(List.of(PurgeKV.builder().type(PurgeKV.class.getName()).build()))
+                    .build()
+            )
+        );
     }
 
 }

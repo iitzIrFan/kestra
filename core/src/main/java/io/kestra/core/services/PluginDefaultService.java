@@ -1,11 +1,28 @@
 package io.kestra.core.services;
 
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.slf4j.Logger;
+import org.slf4j.event.Level;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.Plugin;
@@ -26,6 +43,7 @@ import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.Logs;
 import io.kestra.core.utils.MapUtils;
 import io.kestra.plugin.core.flow.Template;
+
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
@@ -34,21 +52,6 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.event.Level;
-
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Services for parsing flows and injecting plugin default values.
@@ -86,7 +89,6 @@ public class PluginDefaultService {
     @Value("{kestra.templates.enabled:false}")
     private boolean templatesEnabled;
 
-
     private final AtomicBoolean warnOnce = new AtomicBoolean(false);
 
     @PostConstruct
@@ -112,8 +114,8 @@ public class PluginDefaultService {
      * @return list of {@code PluginDefault} ordered by most important first
      */
     protected List<PluginDefault> getAllDefaults(final String tenantId,
-                                                 final String namespace,
-                                                 final Map<String, Object> flow) {
+        final String namespace,
+        final Map<String, Object> flow) {
         List<PluginDefault> defaults = new ArrayList<>();
         defaults.addAll(getFlowDefaults(flow));
         defaults.addAll(getGlobalDefaults());
@@ -171,11 +173,13 @@ public class PluginDefaultService {
             return this.injectAllDefaults(flow, false);
         } catch (Exception e) {
             try {
-                logQueue.emitAsync(RunContextLogger
-                    .logEntries(
-                        Execution.loggingEventFromException(e),
-                        LogEntry.of(execution)
-                    ));
+                logQueue.emitAsync(
+                    RunContextLogger
+                        .logEntries(
+                            Execution.loggingEventFromException(e),
+                            LogEntry.of(execution)
+                        )
+                );
             } catch (QueueException e1) {
                 // silently do nothing
             }
@@ -233,8 +237,8 @@ public class PluginDefaultService {
      * If {@code strictParsing} is {@code true}, the parsing will fail in the following cases:
      * </p>
      * <ul>
-     *   <li>The source contains duplicate properties.</li>
-     *   <li>The source contains unknown properties.</li>
+     * <li>The source contains duplicate properties.</li>
+     * <li>The source contains unknown properties.</li>
      * </ul>
      *
      * @param flow the flow to be parsed
@@ -321,22 +325,22 @@ public class PluginDefaultService {
         return result;
     }
 
-    public  FlowWithSource injectVersionDefaults(final FlowInterface flow, final boolean safe) throws FlowProcessingException {
+    public FlowWithSource injectVersionDefaults(final FlowInterface flow, final boolean safe) throws FlowProcessingException {
         return injectVersionDefaults(flow, safe, false);
     }
 
     public Map<String, Object> injectVersionDefaults(@Nullable final String tenantId,
-                                                     final String namespace,
-                                                     final Map<String, Object> mapFlow) throws FlowProcessingException {
+        final String namespace,
+        final Map<String, Object> mapFlow) throws FlowProcessingException {
         return innerInjectDefault(tenantId, namespace, mapFlow, true);
     }
 
     /**
      * Parses and injects default into the given flow.
      *
-     * @param tenantId  the Tenant ID.
-     * @param source    the flow source.
-     * @return  a new {@link FlowWithSource}.
+     * @param tenantId the Tenant ID.
+     * @param source the flow source.
+     * @return a new {@link FlowWithSource}.
      *
      * @throws FlowProcessingException when parsing flow.
      */
@@ -353,10 +357,10 @@ public class PluginDefaultService {
     /**
      * Parses and injects plugin default versions into the given flow.
      *
-     * @param tenantId  the Tenant ID.
-     * @param source    the flow source.
+     * @param tenantId the Tenant ID.
+     * @param source the flow source.
      * @param strictParsing specifies if the source must meet strict validation requirements
-     * @return  a new {@link FlowWithSource}.
+     * @return a new {@link FlowWithSource}.
      *
      * @throws FlowProcessingException when parsing flow.
      */
@@ -373,21 +377,21 @@ public class PluginDefaultService {
     /**
      * Parses and injects defaults into the given flow.
      *
-     * @param tenant  the tenant identifier.
+     * @param tenant the tenant identifier.
      * @param namespace the namespace.
-     * @param revision  the flow revision.
-     * @param source    the flow source.
+     * @param revision the flow revision.
+     * @param source the flow source.
      * @return a new {@link FlowWithSource}.
      *
      * @throws ConstraintViolationException when parsing flow.
      */
     private FlowWithSource parseFlowWithAllDefaults(@Nullable final String tenant,
-                                                    @Nullable String namespace,
-                                                    @Nullable Integer revision,
-                                                    final boolean isDeleted,
-                                                    final String source,
-                                                    final boolean onlyVersions,
-                                                    final boolean strictParsing) throws ConstraintViolationException, JsonProcessingException {
+        @Nullable String namespace,
+        @Nullable Integer revision,
+        final boolean isDeleted,
+        final String source,
+        final boolean onlyVersions,
+        final boolean strictParsing) throws ConstraintViolationException, JsonProcessingException {
         Map<String, Object> mapFlow = OBJECT_MAPPER.readValue(source, JacksonMapper.MAP_TYPE_REFERENCE);
         namespace = namespace == null ? (String) mapFlow.get("namespace") : namespace;
         revision = revision == null ? (Integer) mapFlow.get("revision") : revision;
@@ -415,7 +419,6 @@ public class PluginDefaultService {
         return full;
     }
 
-
     @SuppressWarnings("unchecked")
     private Map<String, Object> innerInjectDefault(final String tenantId, final String namespace, Map<String, Object> flowAsMap, final boolean onlyVersions) {
         List<PluginDefault> allDefaults = getAllDefaults(tenantId, namespace, flowAsMap);
@@ -423,7 +426,8 @@ public class PluginDefaultService {
         if (onlyVersions) {
             // filter only default 'version' property
             allDefaults = allDefaults.stream()
-                .map(defaults -> {
+                .map(defaults ->
+                {
                     Map<String, Object> filtered = defaults.getValues().entrySet()
                         .stream().filter(entry -> entry.getKey().equals("version"))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -488,7 +492,8 @@ public class PluginDefaultService {
         Set<String> pluginDefaultProperties = pluginDefault.getValues().keySet();
         List<String> pluginProperties = Stream.of(classByIdentifier.getMethods())
             .filter(method -> method.getName().startsWith("get") || method.getName().startsWith("is"))
-            .map(method -> {
+            .map(method ->
+            {
                 if (method.getName().startsWith("get")) {
                     return method.getName().substring(3).toLowerCase();
                 }
@@ -514,9 +519,11 @@ public class PluginDefaultService {
 
     private void addAliases(List<PluginDefault> allDefaults) {
         List<PluginDefault> aliasedPluginDefault = allDefaults.stream()
-            .map(pluginDefault -> {
+            .map(pluginDefault ->
+            {
                 Class<? extends Plugin> classByIdentifier = getClassByIdentifier(pluginDefault);
-                return classByIdentifier != null && !pluginDefault.getType().equals(classByIdentifier.getTypeName()) ? pluginDefault.toBuilder().type(classByIdentifier.getTypeName()).build() : null;
+                return classByIdentifier != null && !pluginDefault.getType().equals(classByIdentifier.getTypeName()) ? pluginDefault.toBuilder().type(classByIdentifier.getTypeName()).build()
+                    : null;
             })
             .filter(Objects::nonNull)
             .toList();
@@ -530,10 +537,12 @@ public class PluginDefaultService {
             value = value
                 .entrySet()
                 .stream()
-                .map(e -> new AbstractMap.SimpleEntry<>(
-                    e.getKey(),
-                    recursiveDefaults(e.getValue(), defaults)
-                ))
+                .map(
+                    e -> new AbstractMap.SimpleEntry<>(
+                        e.getKey(),
+                        recursiveDefaults(e.getValue(), defaults)
+                    )
+                )
                 .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue()), HashMap::putAll);
 
             if (value.containsKey("type")) {

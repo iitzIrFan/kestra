@@ -1,16 +1,18 @@
 package io.kestra.plugin.core.state;
 
+import java.io.FileNotFoundException;
+import java.util.Map;
+
+import org.junit.jupiter.api.Test;
+
 import io.kestra.core.context.TestRunContextFactory;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.kestra.core.junit.annotations.KestraTest;
-import jakarta.inject.Inject;
-import org.junit.jupiter.api.Test;
 
-import java.io.FileNotFoundException;
-import java.util.Map;
+import jakarta.inject.Inject;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -28,10 +30,12 @@ class StateTest {
             .type(Get.class.getName())
             .build();
 
-        RunContext runContext = TestsUtils.mockRunContext(tenant, runContextFactory, get, Map.of(
-            "key", "test",
-            "inc", 1
-        ));
+        RunContext runContext = TestsUtils.mockRunContext(
+            tenant, runContextFactory, get, Map.of(
+                "key", "test",
+                "inc", 1
+            )
+        );
 
         Get.Output getOutput = get.run(runContext);
         assertThat(getOutput.getCount()).isZero();
@@ -39,9 +43,13 @@ class StateTest {
         Set set = Set.builder()
             .id(IdUtils.create())
             .type(Set.class.toString())
-            .data(Property.ofValue(Map.of(
-                "{{ inputs.key }}", "{{ inputs.inc }}"
-            )))
+            .data(
+                Property.ofValue(
+                    Map.of(
+                        "{{ inputs.key }}", "{{ inputs.inc }}"
+                    )
+                )
+            )
             .build();
         Set.Output setOutput = set.run(runContext);
         assertThat(setOutput.getCount()).isEqualTo(1);
@@ -57,10 +65,14 @@ class StateTest {
         set = Set.builder()
             .id(IdUtils.create())
             .type(Set.class.toString())
-            .data(Property.ofValue(Map.of(
-                "{{ inputs.key }}", "2",
-                "test2", "3"
-            )))
+            .data(
+                Property.ofValue(
+                    Map.of(
+                        "{{ inputs.key }}", "2",
+                        "test2", "3"
+                    )
+                )
+            )
             .build();
 
         setOutput = set.run(runContext);
@@ -85,7 +97,6 @@ class StateTest {
         Delete.Output deleteRun = delete.run(runContext);
         assertThat(deleteRun.getDeleted()).isTrue();
 
-
         get = Get.builder()
             .id(IdUtils.create())
             .type(Get.class.toString())
@@ -106,8 +117,7 @@ class StateTest {
             .errorOnMissing(Property.ofValue(true))
             .build();
 
-        assertThrows(FileNotFoundException.class, () ->
-            task.run(TestsUtils.mockRunContext(tenant, runContextFactory, task, Map.of())));
+        assertThrows(FileNotFoundException.class, () -> task.run(TestsUtils.mockRunContext(tenant, runContextFactory, task, Map.of())));
     }
 
     @Test
@@ -120,7 +130,6 @@ class StateTest {
             .errorOnMissing(Property.ofValue(true))
             .build();
 
-        assertThrows(FileNotFoundException.class, () ->
-            task.run(TestsUtils.mockRunContext(tenant, runContextFactory, task, Map.of())));
+        assertThrows(FileNotFoundException.class, () -> task.run(TestsUtils.mockRunContext(tenant, runContextFactory, task, Map.of())));
     }
 }

@@ -1,6 +1,13 @@
 package io.kestra.core.junit.extensions;
 
-import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -9,15 +16,11 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.TestsUtils;
+
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Pageable;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
-import org.junit.jupiter.api.extension.ExtensionContext;
+
+import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
 
 public abstract class AbstractFlowLoaderExtension {
 
@@ -33,12 +36,14 @@ public abstract class AbstractFlowLoaderExtension {
 
             if (applicationContext == null) {
                 throw new IllegalStateException(
-                    "No application context, to use '@LoadFlows' annotation, you need to add '@KestraTest'");
+                    "No application context, to use '@LoadFlows' annotation, you need to add '@KestraTest'"
+                );
             }
         }
 
         LocalFlowRepositoryLoader repositoryLoader = applicationContext.getBean(
-            LocalFlowRepositoryLoader.class);
+            LocalFlowRepositoryLoader.class
+        );
 
         for (String path : paths) {
             URL resource = loadFile(path);
@@ -60,7 +65,8 @@ public abstract class AbstractFlowLoaderExtension {
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> flowIds.contains(flow.getId()))
             .filter(flow -> tenantId.equals(flow.getTenantId()))
-            .forEach(flow -> {
+            .forEach(flow ->
+            {
                 flowRepository.delete(FlowWithSource.of(flow, "unused"));
                 executionRepository.findByFlowId(tenantId, flow.getNamespace(), flow.getId(), Pageable.UNPAGED)
                     .forEach(executionRepository::delete);

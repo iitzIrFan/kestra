@@ -1,5 +1,11 @@
 package io.kestra.core.repositories;
 
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
@@ -9,6 +15,7 @@ import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.plugin.core.dashboard.data.Executions;
+
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
@@ -16,12 +23,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import reactor.core.publisher.Flux;
-
-import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.function.Function;
 
 public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Execution>, QueryBuilderInterface<Executions.Fields> {
     default Optional<Execution> findById(String tenantId, String id) {
@@ -37,7 +38,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     /**
      * Finds all the executions that was triggered by the given execution id.
      *
-     * @param tenantId           the tenant id.
+     * @param tenantId the tenant id.
      * @param triggerExecutionId the id of the execution trigger.
      * @return a {@link Flux} of one or more executions.
      */
@@ -46,10 +47,10 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     /**
      * Finds the latest execution for the given flow and s.
      *
-     * @param tenantId  The tenant ID.
+     * @param tenantId The tenant ID.
      * @param namespace The namespace of execution.
-     * @param flowId    The flow ID of execution.
-     * @param states     The execution's states.
+     * @param flowId The flow ID of execution.
+     * @param states The execution's states.
      * @return an optional {@link Execution}.
      */
     Optional<Execution> findLatestForStates(String tenantId, String namespace, String flowId, List<State.Type> states);
@@ -57,8 +58,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
     ArrayListTotal<Execution> find(
         Pageable pageable,
         @Nullable String tenantId,
-        @Nullable List<QueryFilter> filters
-    );
+        @Nullable List<QueryFilter> filters);
 
     default Flux<Execution> find(
         @Nullable String query,
@@ -71,8 +71,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable List<State.Type> state,
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter
-    ) {
+        @Nullable ChildFilter childFilter) {
         return find(query, tenantId, scope, namespace, flowId, startDate, endDate, state, labels, triggerExecutionId, childFilter, false);
     }
 
@@ -88,8 +87,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable Map<String, String> labels,
         @Nullable String triggerExecutionId,
         @Nullable ChildFilter childFilter,
-        boolean allowDeleted
-    );
+        boolean allowDeleted);
 
     Flux<Execution> findAllAsync(@Nullable String tenantId);
 
@@ -107,8 +105,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable String flowId,
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
-        @Nullable DateUtils.GroupType groupBy
-    );
+        @Nullable DateUtils.GroupType groupBy);
 
     List<DailyExecutionStatistics> dailyStatistics(
         @Nullable String query,
@@ -119,8 +116,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable ZonedDateTime startDate,
         @Nullable ZonedDateTime endDate,
         @Nullable DateUtils.GroupType groupBy,
-        List<State.Type> state
-    );
+        List<State.Type> state);
 
     @Getter
     @SuperBuilder
@@ -155,6 +151,5 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
 
     List<Execution> lastExecutions(
         String tenantId,
-        @Nullable List<FlowFilter> flows
-    );
+        @Nullable List<FlowFilter> flows);
 }

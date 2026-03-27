@@ -1,5 +1,16 @@
 package io.kestra.core.services;
 
+import java.time.Duration;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
+
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
@@ -13,21 +24,11 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.ConcurrencyLimit;
 import io.kestra.core.runners.TestRunnerUtils;
 import io.kestra.core.utils.TestsUtils;
+
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
 import reactor.core.publisher.Flux;
 
-import java.time.Duration;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -67,7 +68,8 @@ class ConcurrencyLimitServiceTest {
 
         // await for the execution to be terminated
         CountDownLatch terminated = new CountDownLatch(2);
-        Flux<Execution> receive = TestsUtils.receive(executionQueue, (either) -> {
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, (either) ->
+        {
             if (either.getLeft().getId().equals(first.getId()) && either.getLeft().getState().isTerminated()) {
                 terminated.countDown();
             }
@@ -101,9 +103,8 @@ class ConcurrencyLimitServiceTest {
         Optional<ConcurrencyLimit> limit = concurrencyLimitService.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId());
 
         assertThat(limit).isNotEmpty();
-        ConcurrencyLimit updated =  limit.get().withRunning(99);
+        ConcurrencyLimit updated = limit.get().withRunning(99);
         concurrencyLimitService.update(updated);
-
 
         limit = concurrencyLimitService.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId());
         assertThat(limit).isNotEmpty();
@@ -131,7 +132,8 @@ class ConcurrencyLimitServiceTest {
         return runnerUtils.awaitExecution(
             it -> execution.getId().equals(it.getId()) && it.getState().getCurrent() == state,
             execution,
-            Duration.ofSeconds(1));
+            Duration.ofSeconds(1)
+        );
     }
 
     private Execution createExecution(String tenantId, String namespace, String flowId) {

@@ -1,25 +1,21 @@
 package io.kestra.core.models;
 
-import io.kestra.core.exceptions.InvalidQueryFiltersException;
-import io.kestra.core.models.QueryFilter.Field;
-import io.kestra.core.models.QueryFilter.Op;
-import io.kestra.core.models.QueryFilter.Resource;
-import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.dashboards.filters.Prefix;
-import io.kestra.core.models.dashboards.filters.EqualTo;
-import io.kestra.core.models.dashboards.filters.StartsWith;
-import io.kestra.core.models.dashboards.filters.Regex;
-import io.kestra.core.models.dashboards.filters.Contains;
-import io.kestra.core.models.dashboards.filters.In;
 import java.util.List;
 import java.util.stream.Stream;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.util.List;
-import java.util.stream.Stream;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
+import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Op;
+import io.kestra.core.models.QueryFilter.Resource;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
+import io.kestra.core.models.dashboards.filters.EqualTo;
+import io.kestra.core.models.dashboards.filters.Prefix;
+import io.kestra.core.models.dashboards.filters.StartsWith;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
@@ -38,7 +34,8 @@ public class QueryFilterTest {
     void should_fail_to_validate_all_operations(QueryFilter filter, Resource resource) {
         InvalidQueryFiltersException e = assertThrows(
             InvalidQueryFiltersException.class,
-            () -> QueryFilter.validateQueryFilters(List.of(filter), resource));
+            () -> QueryFilter.validateQueryFilters(List.of(filter), resource)
+        );
         assertThat(e.getMessage()).contains("Operation");
     }
 
@@ -212,7 +209,9 @@ public class QueryFilterTest {
             .value("io.kestra.tests")
             .build();
 
-        enum TestField { NAMESPACE }
+        enum TestField {
+            NAMESPACE
+        }
         AbstractFilter<TestField> result = filter.toDashboardFilterBuilder(TestField.NAMESPACE, filter.value());
 
         assertThat(result).isInstanceOf(Prefix.class);
@@ -229,7 +228,9 @@ public class QueryFilterTest {
             .value("io.kestra.tests")
             .build();
 
-        enum TestField { NAMESPACE }
+        enum TestField {
+            NAMESPACE
+        }
         AbstractFilter<TestField> result = filter.toDashboardFilterBuilder(TestField.NAMESPACE, filter.value());
 
         assertThat(result).isInstanceOf(EqualTo.class);
@@ -243,7 +244,9 @@ public class QueryFilterTest {
             .value("io.kestra")
             .build();
 
-        enum TestField { NAMESPACE }
+        enum TestField {
+            NAMESPACE
+        }
         AbstractFilter<TestField> result = filter.toDashboardFilterBuilder(TestField.NAMESPACE, filter.value());
 
         assertThat(result).isInstanceOf(StartsWith.class);

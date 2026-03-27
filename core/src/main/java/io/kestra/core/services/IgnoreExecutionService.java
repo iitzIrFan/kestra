@@ -1,16 +1,18 @@
 package io.kestra.core.services;
 
-import com.google.common.annotations.VisibleForTesting;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.flows.FlowId;
-import jakarta.annotation.Nullable;
-import jakarta.inject.Singleton;
-import lombok.extern.slf4j.Slf4j;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.flows.FlowId;
+
+import jakarta.annotation.Nullable;
+import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Service that deals with ignore execution from the command line.
@@ -69,6 +71,7 @@ public class IgnoreExecutionService {
 
     /**
      * Ignore an indexer record based on its key.
+     * 
      * @param key the record key as computed by <code>QueueService.key(record)</code>, can be null
      */
     public boolean ignoreIndexerRecord(@Nullable String key) {

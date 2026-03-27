@@ -1,5 +1,12 @@
 package io.kestra.core.services;
 
+import java.net.URI;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import org.apache.hc.core5.http.NameValuePair;
+import org.apache.hc.core5.net.URIBuilder;
+
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
@@ -19,6 +26,7 @@ import io.kestra.core.utils.UriProvider;
 import io.kestra.plugin.core.trigger.AbstractWebhookTrigger;
 import io.kestra.plugin.core.trigger.WebhookContext;
 import io.kestra.plugin.core.trigger.WebhookResponse;
+
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.http.sse.Event;
 import io.opentelemetry.api.OpenTelemetry;
@@ -29,13 +37,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.core5.http.NameValuePair;
-import org.apache.hc.core5.net.URIBuilder;
 import reactor.core.publisher.Flux;
-
-import java.net.URI;
-import java.util.*;
-import java.util.stream.Collectors;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
 
@@ -78,10 +80,12 @@ public class WebhookService {
 
         return uriBuilder.getQueryParams()
             .stream()
-            .collect(Collectors.groupingBy(
-                NameValuePair::getName,
-                Collectors.mapping(NameValuePair::getValue, Collectors.toList())
-            ));
+            .collect(
+                Collectors.groupingBy(
+                    NameValuePair::getName,
+                    Collectors.mapping(NameValuePair::getValue, Collectors.toList())
+                )
+            );
     }
 
     /**
@@ -150,11 +154,13 @@ public class WebhookService {
             .map(OpenTelemetry::getPropagators)
             .map(ContextPropagators::getTextMapPropagator);
 
-        propagator.ifPresent(textMapPropagator -> textMapPropagator.inject(
-            Context.current(),
-            execution,
-            ExecutionTextMapSetter.INSTANCE
-        ));
+        propagator.ifPresent(
+            textMapPropagator -> textMapPropagator.inject(
+                Context.current(),
+                execution,
+                ExecutionTextMapSetter.INSTANCE
+            )
+        );
 
         executionQueue.emit(execution);
         eventPublisher.publishEvent(CrudEvent.create(execution));
@@ -171,14 +177,15 @@ public class WebhookService {
         var subscriberId = UUID.randomUUID().toString();
         var executionId = execution.getId();
 
-        return Flux.<Event<Execution>>create(emitter -> {
-                streamingService.registerSubscriber(
-                    executionId,
-                    subscriberId,
-                    emitter,
-                    flow
-                );
-            })
+        return Flux.<Event<Execution>> create(emitter ->
+        {
+            streamingService.registerSubscriber(
+                executionId,
+                subscriberId,
+                emitter,
+                flow
+            );
+        })
             .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
     }
 
