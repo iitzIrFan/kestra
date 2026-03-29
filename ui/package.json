@@ -6,7 +6,6 @@
     "packageManager": "npm@10.9.0",
     "scripts": {
         "dev": "vite --host",
-        "check:types": "vue-tsc --noEmit",
         "build": "vite build --emptyOutDir",
         "preview": "vite preview",
         "pretest:types": "openapi-ts",
@@ -62,7 +61,7 @@
         "path-browserify": "^1.0.1",
         "pdfjs-dist": "^5.5.207",
         "pinia": "^3.0.4",
-        "posthog-js": "^1.363.5",
+        "posthog-js": "^1.363.6",
         "rapidoc": "^9.3.8",
         "semver": "^7.7.4",
         "shiki": "^4.0.2",
