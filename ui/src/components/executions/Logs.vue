@@ -87,6 +87,7 @@
                         :active="active"
                         :sizeDependencies="[item.message]"
                         :data-index="item.index"
+                        :key="item.uid"
                     >
                         <LogLine
                             @click="logCursor = item.index.toString()"
