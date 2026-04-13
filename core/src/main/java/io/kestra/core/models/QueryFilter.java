@@ -103,6 +103,12 @@ public record QueryFilter(
                 return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.IN, Op.NOT_IN, Op.CONTAINS);
             }
         },
+        TAGS("tags") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.CONTAINS, Op.IN);
+            }
+        },
         METADATA("metadata") {
             @Override
             public List<Op> supportedOp() {
@@ -245,6 +251,30 @@ public record QueryFilter(
             @Override
             public List<Op> supportedOp() {
                 return List.of(Op.EQUALS, Op.NOT_EQUALS);
+            }
+        },
+        USER_ID("userId") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
+            }
+        },
+        ACTION("action") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS, Op.IN);
+            }
+        },
+        RESOURCES("resources") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.CONTAINS, Op.IN);
+            }
+        },
+        DETAILS("details") {
+            @Override
+            public List<Op> supportedOp() {
+                return List.of(Op.EQUALS);
             }
         },
         MIN_LEVEL("level") {
@@ -449,6 +479,14 @@ public record QueryFilter(
                 );
             }
         },
+        PLUGIN {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY
+                );
+            }
+        },
         ASSET {
             @Override
             public List<Field> supportedField() {
@@ -504,10 +542,41 @@ public record QueryFilter(
                 );
             }
         },
+        AUDIT_LOG {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(
+                    Field.QUERY,
+                    Field.NAMESPACE,
+                    Field.FLOW_ID,
+                    Field.EXECUTION_ID,
+                    Field.ID,
+                    Field.USER_ID,
+                    Field.TYPE,
+                    Field.RESOURCES,
+                    Field.ACTION,
+                    Field.DETAILS,
+                    Field.START_DATE,
+                    Field.END_DATE
+                );
+            }
+        },
         SERVICE_INSTANCE {
             @Override
             public List<Field> supportedField() {
                 return List.of(Field.STATE, Field.TYPE, Field.CREATED);
+            }
+        },
+        TENANT {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY);
+            }
+        },
+        APP {
+            @Override
+            public List<Field> supportedField() {
+                return List.of(Field.QUERY, Field.TAGS, Field.NAMESPACE, Field.FLOW_ID);
             }
         };
 
