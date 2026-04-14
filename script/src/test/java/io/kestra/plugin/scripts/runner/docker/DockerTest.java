@@ -1,14 +1,22 @@
 package io.kestra.plugin.scripts.runner.docker;
 
 import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.kestra.core.queues.QueueFactoryInterface;
+import io.kestra.core.queues.QueueInterface;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.assertj.core.api.Assertions;
 import org.hamcrest.MatcherAssert;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -19,16 +27,12 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.AbstractTaskRunnerTest;
 import io.kestra.core.models.tasks.runners.ScriptService;
 import io.kestra.core.models.tasks.runners.TaskRunner;
-import io.kestra.core.queues.QueueFactoryInterface;
-import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 
-import jakarta.inject.Inject;
-import jakarta.inject.Named;
 import reactor.core.publisher.Flux;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
@@ -40,6 +44,21 @@ class DockerTest extends AbstractTaskRunnerTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> workerTaskLogQueue;
+
+    @BeforeEach
+    void assumeDockerAvailable() {
+        String dockerHost = Optional.ofNullable(System.getenv("DOCKER_HOST"))
+            .filter(host -> !host.isBlank())
+            .orElse("unix:///var/run/docker.sock");
+
+        boolean dockerAvailable = !dockerHost.startsWith("unix://") ||
+            Files.exists(Path.of(dockerHost.substring("unix://".length())));
+
+        Assumptions.assumeTrue(
+            dockerAvailable,
+            "Skipping Docker tests: Docker host not available: " + dockerHost
+        );
+    }
 
     @Override
     protected TaskRunner<?> taskRunner() {
