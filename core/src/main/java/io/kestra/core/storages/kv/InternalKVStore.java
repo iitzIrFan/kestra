@@ -1,16 +1,5 @@
 package io.kestra.core.storages.kv;
 
-import java.io.ByteArrayInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
-import java.time.Instant;
-import java.util.*;
-import java.util.regex.Pattern;
-import java.util.stream.Stream;
-
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.FetchVersion;
 import io.kestra.core.models.QueryFilter;
@@ -20,10 +9,23 @@ import io.kestra.core.repositories.KvMetadataRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
-
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
+
+import java.io.ByteArrayInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -110,7 +112,7 @@ public class InternalKVStore implements KVStore {
     public void putRaw(String key, @Nullable KVMetadata metadata, byte[] rawValue) throws IOException {
         KVStore.validateKey(key);
 
-        PersistedKvMetadata saved = this.kvMetadataStateStore.save(
+        PersistedKvMetadata saved = this.kvMetadataRepository.save(
             PersistedKvMetadata.builder()
                 .tenantId(this.tenant)
                 .namespace(this.namespace)
