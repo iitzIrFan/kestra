@@ -2,6 +2,7 @@ package io.kestra.core.runners;
 
 import java.util.Optional;
 
+import io.kestra.core.docs.JsonSchemaGenerator;
 import io.kestra.core.models.tasks.runners.TaskLogLineMatcher;
 import io.kestra.core.services.VariablesService;
 import io.kestra.core.trace.TracerFactory;
@@ -55,6 +56,13 @@ public class Services {
      */
     public Optional<ObservationRegistry> observationRegistry() {
         return applicationContext.findBean(ObservationRegistry.class);
+    }
+
+    /**
+     * Provides access to the {@link JsonSchemaGenerator} bean.
+     */
+    public JsonSchemaGenerator jsonSchemaGenerator() {
+        return applicationContext.getBean(JsonSchemaGenerator.class);
     }
 
     /**

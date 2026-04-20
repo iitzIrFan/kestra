@@ -24,6 +24,7 @@ class ServicesTest {
         assertThat(services.taskLogLineMatcher()).isNotNull();
         assertThat(services.tracerFactory()).isNotNull();
         assertThat(services.uriProvider()).isNotNull();
+        assertThat(services.jsonSchemaGenerator()).isNotNull();
         assertThat(services.additionalService(FlowRepositoryInterface.class)).isNotNull();
     }
 }
