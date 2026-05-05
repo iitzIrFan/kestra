@@ -293,7 +293,7 @@ public abstract class AbstractServiceLivenessCoordinatorTest {
 
         return WorkerTrigger.builder()
             .trigger(trigger)
-            .data(WorkerTriggerData.from(mockedTrigger.getKey(), mockedTrigger.getValue().context()))
+            .data(WorkerTriggerData.from(mockedTrigger.getKey(), mockedTrigger.getValue().context(), Map.of()))
             .build();
     }
 

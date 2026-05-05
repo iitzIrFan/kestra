@@ -1,6 +1,7 @@
 package io.kestra.scheduler.pubsub;
 
 import java.util.Optional;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,7 @@ public class TriggerWorkerJobPublisher {
         this.workerJobEventQueue = workerJobEventQueue;
     }
 
-    public void send(TriggerState triggerState, AbstractTrigger trigger, FlowInterface flow, ConditionContext conditionContext) throws InternalException {
+    public void send(TriggerState triggerState, AbstractTrigger trigger, FlowInterface flow, ConditionContext conditionContext, Map<String, Object> conditionVariables) throws InternalException {
 
         if (log.isDebugEnabled()) {
             Logs.logTrigger(
@@ -59,7 +60,7 @@ public class TriggerWorkerJobPublisher {
         WorkerTrigger workerTrigger = WorkerTrigger
             .builder()
             .trigger(trigger)
-            .data(WorkerTriggerData.from(conditionContext, triggerState.context()))
+            .data(WorkerTriggerData.from(conditionContext, triggerState.context(), conditionVariables))
             .build();
         try {
             Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(flow, workerTrigger);

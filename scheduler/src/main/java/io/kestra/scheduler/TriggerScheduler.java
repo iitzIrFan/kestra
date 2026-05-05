@@ -282,7 +282,7 @@ public class TriggerScheduler {
         triggerState = triggerState.evaluatedAt(clock, triggerState.getNextEvaluationDate());
 
         try {
-            if (!TruthUtils.isTruthy(context.conditionContext().getRunContext().render(trigger.getWhen(), context.conditionContext().getVariables()))) {
+            if (!TruthUtils.isTruthy(context.conditionContext().getRunContext().render(trigger.getWhen(), context.conditionVariables()))) {
                 updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, context).ifPresent(triggerStateStore::save);
                 return;
             }
@@ -374,7 +374,7 @@ public class TriggerScheduler {
         updateNextEvaluationDateAndGetOnSuccess(clock, triggerState, triggerEvaluationContext).ifPresent(state ->
         {
             try {
-                this.triggerWorkerJobPublisher.send(state, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext());
+                this.triggerWorkerJobPublisher.send(state, triggerEvaluationContext.trigger(), triggerEvaluationContext.flow(), triggerEvaluationContext.conditionContext(), triggerEvaluationContext.conditionVariables());
                 state = state
                     .lastTriggeredDate(clock)
                     .locked(clock, mustBeLocked);

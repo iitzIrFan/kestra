@@ -292,7 +292,6 @@ public class RunContextInitializer {
         return ConditionContext.builder()
             .flow(flow(data))
             .runContext(runContext)
-            .variables(data.conditionVariables())
             .build();
     }
 
