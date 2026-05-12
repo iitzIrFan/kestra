@@ -1,4 +1,4 @@
-import {describe, expect, it} from "vitest";
+import {describe, expect, it} from "vitest"
 import {
     decodeSearchParams,
     encodeFiltersToQuery,
@@ -8,7 +8,7 @@ import {
     Comparators,
     clearFilterQueryParams,
     isSearchPath,
-} from "@kestra-io/design-system";
+} from "@kestra-io/design-system"
 
 describe("Filter Helpers", () => {
     describe("decodeSearchParams", () => {
@@ -34,15 +34,15 @@ describe("Filter Helpers", () => {
                 "filters[state][IN]": "SUCCESS,FAILED",
             });
 
-            const startDate = new Date("2023-01-01T00:00:00Z");
-            const endDate = new Date("2023-01-31T23:59:59Z");
-            const timeRangeFilters = [{key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate, endDate}}];
+            const startDate = new Date("2023-01-01T00:00:00Z")
+            const endDate = new Date("2023-01-31T23:59:59Z")
+            const timeRangeFilters = [{key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate, endDate}}]
             expect(encodeFiltersToQuery(timeRangeFilters, keyOfComparator)).toEqual({
                 "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": startDate.toISOString(),
                 "filters[endDate][LESS_THAN_OR_EQUAL_TO]": endDate.toISOString(),
             });
 
-            const labelFilters = [{key: "labels", comparator: Comparators.EQUALS, value: ["env:prod", "team:backend"]}];
+            const labelFilters = [{key: "labels", comparator: Comparators.EQUALS, value: ["env:prod", "team:backend"]}]
             expect(encodeFiltersToQuery(labelFilters, keyOfComparator)).toEqual({
                 "filters[labels][EQUALS][env]": "prod",
                 "filters[labels][EQUALS][team]": "backend",
@@ -57,17 +57,17 @@ describe("Filter Helpers", () => {
 
     describe("isValidFilter", () => {
         it("should validate filters correctly", () => {
-            expect(isValidFilter({key: "namespace", comparator: Comparators.IN, value: ["test"]})).toBe(true);
-            expect(isValidFilter({key: "namespace", comparator: Comparators.IN, value: []})).toBe(false);
-            expect(isValidFilter({key: "state", comparator: Comparators.IN, value: ["SUCCESS"]})).toBe(true);
-            expect(isValidFilter({key: "state", comparator: Comparators.IN, value: []})).toBe(false);
+            expect(isValidFilter({key: "namespace", comparator: Comparators.IN, value: ["test"]})).toBe(true)
+            expect(isValidFilter({key: "namespace", comparator: Comparators.IN, value: []})).toBe(false)
+            expect(isValidFilter({key: "state", comparator: Comparators.IN, value: ["SUCCESS"]})).toBe(true)
+            expect(isValidFilter({key: "state", comparator: Comparators.IN, value: []})).toBe(false)
 
-            const startDate = new Date("2023-01-01");
-            const endDate = new Date("2023-01-31");
-            expect(isValidFilter({key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate, endDate}})).toBe(true);
-            expect(isValidFilter({key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate: null as any, endDate}})).toBe(false);
-        });
-    });
+            const startDate = new Date("2023-01-01")
+            const endDate = new Date("2023-01-31")
+            expect(isValidFilter({key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate, endDate}})).toBe(true)
+            expect(isValidFilter({key: "timeRange", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: {startDate: null as any, endDate}})).toBe(false)
+        })
+    })
 
     describe("getUniqueFilters", () => {
         it("should keep last occurrence of duplicate keys", () => {
@@ -93,9 +93,9 @@ describe("Filter Helpers", () => {
 
     describe("isSearchPath", () => {
         it("should identify search paths correctly", () => {
-            expect(isSearchPath("flows/list")).toBe(true);
-            expect(isSearchPath("executions/list")).toBe(true);
-            expect(isSearchPath("/unknown")).toBe(false);
-        });
-    });
-});
+            expect(isSearchPath("flows/list")).toBe(true)
+            expect(isSearchPath("executions/list")).toBe(true)
+            expect(isSearchPath("/unknown")).toBe(false)
+        })
+    })
+})

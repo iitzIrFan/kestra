@@ -1,10 +1,10 @@
-import {computed, ComputedRef} from "vue";
-import {FilterConfiguration, Comparators} from "@kestra-io/design-system";
-import {useValues} from "../composables/useValues";
-import {useI18n} from "vue-i18n";
+import {computed, ComputedRef} from "vue"
+import {FilterConfiguration, Comparators} from "@kestra-io/design-system"
+import {useValues} from "../composables/useValues"
+import {useI18n} from "vue-i18n"
 
 export const useLogExecutionsFilter = (): ComputedRef<FilterConfiguration> => {
-    const {t} = useI18n();
+    const {t} = useI18n()
 
     return computed(() => {
         return {
@@ -15,11 +15,12 @@ export const useLogExecutionsFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "level",
                     label: t("filter.level_log_executions.label"),
                     description: t("filter.level.description"),
-                    comparators: [Comparators.AT_OR_BELOW],
+                    comparators: [Comparators.AT_OR_BELOW, Comparators.EQUALS],
+                    showComparatorSelection: true,
                     valueType: "select",
                     valueProvider: async () => {
-                        const {VALUES} = useValues("logs");
-                        return VALUES.LEVELS;
+                        const {VALUES} = useValues("logs")
+                        return VALUES.LEVELS
                     },
                     defaultValue: () => (
                         typeof window !== "undefined"
@@ -29,6 +30,6 @@ export const useLogExecutionsFilter = (): ComputedRef<FilterConfiguration> => {
                     visibleByDefault: true,
                 },
             ],
-        };
-    });
-};
+        }
+    })
+}
