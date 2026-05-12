@@ -64,7 +64,8 @@ public abstract class AbstractJdbcRepository {
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
         var tenant = buildTenantCondition(tenantId);
 
-        // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
+        // Always include `deleted` in the query filters as most database optimizers can
+        // only use and index if the leftmost columns are used in the query
         return allowDeleted ? tenant.and(DELETED_FIELD.in(true, false)) : tenant.and(DELETED_FIELD.eq(false));
     }
 
@@ -75,7 +76,8 @@ public abstract class AbstractJdbcRepository {
     protected Condition defaultFilterWithNoACL(String tenantId, boolean deleted) {
         var tenant = buildTenantCondition(tenantId);
 
-        // Always include `deleted` in the query filters as most database optimizers can only use and index if the leftmost columns are used in the query
+        // Always include `deleted` in the query filters as most database optimizers can
+        // only use and index if the leftmost columns are used in the query
         return deleted ? tenant.and(DELETED_FIELD.in(true, false)) : tenant.and(DELETED_FIELD.eq(false));
     }
 
@@ -103,18 +105,26 @@ public abstract class AbstractJdbcRepository {
         return DSL.week(timestampField);
     }
 
-    protected List<Field<?>> groupByFields(Duration duration, @Nullable String dateField, @Nullable DateUtils.GroupType groupBy) {
+    protected List<Field<?>> groupByFields(Duration duration, @Nullable String dateField,
+            @Nullable DateUtils.GroupType groupBy) {
         return groupByFields(duration, dateField, groupBy, true);
     }
 
-    protected List<Field<?>> groupByFields(Duration duration, @Nullable String dateField, @Nullable DateUtils.GroupType groupBy, boolean withAs) {
+    protected List<Field<?>> groupByFields(Duration duration, @Nullable String dateField,
+            @Nullable DateUtils.GroupType groupBy, boolean withAs) {
         String field = dateField != null ? dateField : "timestamp";
-        Field<Integer> month = withAs ? DSL.month(DSL.timestamp(field(field, Date.class))).as("month") : DSL.month(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> year = withAs ? DSL.year(DSL.timestamp(field(field, Date.class))).as("year") : DSL.year(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> day = withAs ? DSL.day(DSL.timestamp(field(field, Date.class))).as("day") : DSL.day(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> week = withAs ? weekFromTimestamp(DSL.timestamp(field(field, Date.class))).as("week") : weekFromTimestamp(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> hour = withAs ? DSL.hour(DSL.timestamp(field(field, Date.class))).as("hour") : DSL.hour(DSL.timestamp(field(field, Date.class)));
-        Field<Integer> minute = withAs ? DSL.minute(DSL.timestamp(field(field, Date.class))).as("minute") : DSL.minute(DSL.timestamp(field(field, Date.class)));
+        Field<Integer> month = withAs ? DSL.month(DSL.timestamp(field(field, Date.class))).as("month")
+                : DSL.month(DSL.timestamp(field(field, Date.class)));
+        Field<Integer> year = withAs ? DSL.year(DSL.timestamp(field(field, Date.class))).as("year")
+                : DSL.year(DSL.timestamp(field(field, Date.class)));
+        Field<Integer> day = withAs ? DSL.day(DSL.timestamp(field(field, Date.class))).as("day")
+                : DSL.day(DSL.timestamp(field(field, Date.class)));
+        Field<Integer> week = withAs ? weekFromTimestamp(DSL.timestamp(field(field, Date.class))).as("week")
+                : weekFromTimestamp(DSL.timestamp(field(field, Date.class)));
+        Field<Integer> hour = withAs ? DSL.hour(DSL.timestamp(field(field, Date.class))).as("hour")
+                : DSL.hour(DSL.timestamp(field(field, Date.class)));
+        Field<Integer> minute = withAs ? DSL.minute(DSL.timestamp(field(field, Date.class))).as("minute")
+                : DSL.minute(DSL.timestamp(field(field, Date.class)));
 
         if (groupBy == DateUtils.GroupType.MONTH || duration.toDays() > DateUtils.GroupValue.MONTH.getValue()) {
             return List.of(year, month);
@@ -130,74 +140,79 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected <F extends Enum<F>> SelectConditionStep<Record> select(
-        DSLContext context,
-        JdbcFilterService filterService,
-        Map<String, ? extends ColumnDescriptor<F>> descriptors,
-        List<Field<Date>> dateFields,
-        Map<F, String> fieldsMapping,
-        Table<Record> table,
-        String tenantId) {
+            DSLContext context,
+            JdbcFilterService filterService,
+            Map<String, ? extends ColumnDescriptor<F>> descriptors,
+            List<Field<Date>> dateFields,
+            Map<F, String> fieldsMapping,
+            Table<Record> table,
+            String tenantId) {
 
         return context
-            .select(
-                Stream.concat(
-                    descriptors.entrySet().stream()
-                        .map(entry -> {
-                            ColumnDescriptor<F> col = entry.getValue();
-                            String key = entry.getKey();
-                            Field<?> field = columnToField(col, fieldsMapping);
-                            if (col.getAgg() != null) {
-                                field = filterService.buildAggregation(field, col.getAgg());
-                            }
-                            return field.as(key);
-                        }),
-                    dateFields.stream()
-                ).toList()
-            )
-            .from(table)
-            .where(this.defaultFilter(tenantId));
+                .select(
+                        Stream.concat(
+                                descriptors.entrySet().stream()
+                                        .map(entry -> {
+                                            ColumnDescriptor<F> col = entry.getValue();
+                                            String key = entry.getKey();
+                                            Field<?> field = columnToField(col, fieldsMapping);
+                                            if (col.getAgg() != null) {
+                                                field = filterService.buildAggregation(field, col.getAgg());
+                                            }
+                                            return field.as(key);
+                                        }),
+                                dateFields.stream()).toList())
+                .from(table)
+                .where(this.defaultFilter(tenantId));
     }
 
     /**
-     * Applies the filters from the provided descriptors to the given select condition step.
+     * Applies the filters from the provided descriptors to the given select
+     * condition step.
      * Used in the fetchData() method
      *
-     * @param selectConditionStep the select condition step to which the filters will be applied
-     * @param jdbcFilterService the service used to apply the filters
-     * @param filters the data filter containing the filter conditions
-     * @param fieldsMapping a map of field enums to their corresponding database column names
-     * @param <F> the type of the fields enum
+     * @param selectConditionStep the select condition step to which the filters
+     *                            will be applied
+     * @param jdbcFilterService   the service used to apply the filters
+     * @param filters             the data filter containing the filter conditions
+     * @param fieldsMapping       a map of field enums to their corresponding
+     *                            database column names
+     * @param <F>                 the type of the fields enum
      * @return the select condition step with the applied filters
      */
-    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters,
-        Map<F, String> fieldsMapping) {
+    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep,
+            JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters,
+            Map<F, String> fieldsMapping) {
         return jdbcFilterService.addFilters(selectConditionStep, fieldsMapping, filters);
     }
 
     /**
-     * Groups the results of the given select condition step based on the provided descriptors and field mappings.
+     * Groups the results of the given select condition step based on the provided
+     * descriptors and field mappings.
      * Used in the fetchData() method
      *
-     * @param selectConditionStep the select condition step to which the grouping will be applied
-     * @param columnsNoDate the data filter containing the column descriptors for grouping
-     * @param dateFields the data filter containing the column descriptors for grouping
-     * @param fieldsMapping a map of field enums to their corresponding database column names
-     * @param <F> the type of the fields enum
+     * @param selectConditionStep the select condition step to which the grouping
+     *                            will be applied
+     * @param columnsNoDate       the data filter containing the column descriptors
+     *                            for grouping
+     * @param dateFields          the data filter containing the column descriptors
+     *                            for grouping
+     * @param fieldsMapping       a map of field enums to their corresponding
+     *                            database column names
+     * @param <F>                 the type of the fields enum
      * @return the select having step with the applied grouping
      */
     protected <F extends Enum<F>> SelectHavingStep<Record> groupBy(
-        SelectConditionStep<Record> selectConditionStep,
-        List<? extends ColumnDescriptor<F>> columnsNoDate,
-        List<Field<Date>> dateFields,
-        Map<F, String> fieldsMapping) {
+            SelectConditionStep<Record> selectConditionStep,
+            List<? extends ColumnDescriptor<F>> columnsNoDate,
+            List<Field<Date>> dateFields,
+            Map<F, String> fieldsMapping) {
         return selectConditionStep.groupBy(
-            Stream.concat(
-                columnsNoDate.stream()
-                    .filter(col -> col.getAgg() == null)
-                    .map(col -> field(fieldsMapping.get(col.getField()))),
-                dateFields.stream()
-            ).toList()
-        );
+                Stream.concat(
+                        columnsNoDate.stream()
+                                .filter(col -> col.getAgg() == null)
+                                .map(col -> field(fieldsMapping.get(col.getField()))),
+                        dateFields.stream()).toList());
     }
 
     /**
@@ -205,35 +220,41 @@ public abstract class AbstractJdbcRepository {
      * Used in the fetchData() method
      *
      * @param selectHavingStep the select step to which the ordering will be applied
-     * @param descriptors the data filter containing the order by information
-     * @param <F> the type of the fields enum
+     * @param descriptors      the data filter containing the order by information
+     * @param <F>              the type of the fields enum
      * @return the select step with the applied ordering
      */
-    protected <F extends Enum<F>> SelectSeekStepN<Record> orderBy(SelectHavingStep<Record> selectHavingStep, DataFilter<F, ? extends ColumnDescriptor<F>> descriptors) {
+    protected <F extends Enum<F>> SelectSeekStepN<Record> orderBy(SelectHavingStep<Record> selectHavingStep,
+            DataFilter<F, ? extends ColumnDescriptor<F>> descriptors) {
         List<SortField<?>> orderFields = ListUtils.emptyOnNull(descriptors.getOrderBy()).stream()
-            .map(orderBy -> {
-                Field<?> field = field(orderBy.getColumn());
-                return orderBy.getOrder() == Order.ASC ? field.asc() : field.desc();
-            })
-            .toList();
+                .map(orderBy -> {
+                    Field<?> field = field(orderBy.getColumn());
+                    return orderBy.getOrder() == Order.ASC ? field.asc() : field.desc();
+                })
+                .toList();
 
         return selectHavingStep.orderBy(orderFields);
     }
 
     /**
-     * Fetches the results of the given select step and applies pagination if a pageable object is provided.
+     * Fetches the results of the given select step and applies pagination if a
+     * pageable object is provided.
      * Used in the fetchData() method
      *
      * @param selectSeekStep the select step to fetch the results from
-     * @param pageable the pageable object containing the pagination information
+     * @param pageable       the pageable object containing the pagination
+     *                       information
      * @return the list of fetched results
      */
-    protected ArrayListTotal<Map<String, Object>> fetchSeekStep(SelectSeekStepN<Record> selectSeekStep, @Nullable Pageable pageable) {
+    protected ArrayListTotal<Map<String, Object>> fetchSeekStep(SelectSeekStepN<Record> selectSeekStep,
+            @Nullable Pageable pageable) {
 
         int totalCount = DSL.using(selectSeekStep.configuration())
-            .fetchCount(selectSeekStep);
-        var results = (pageable != null && pageable.getSize() != -1 ? selectSeekStep.limit(pageable.getSize()).offset(pageable.getOffset() - pageable.getSize()) : selectSeekStep).fetch()
-            .intoMaps();
+                .fetchCount(selectSeekStep);
+        var results = (pageable != null && pageable.getSize() != -1
+                ? selectSeekStep.limit(pageable.getSize()).offset(pageable.getOffset() - pageable.getSize())
+                : selectSeekStep).fetch()
+                .intoMaps();
 
         return new ArrayListTotal<>(results, totalCount);
     }
@@ -243,9 +264,9 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition filter(
-        List<QueryFilter> filters,
-        String dateColumn,
-        Resource resource) {
+            List<QueryFilter> filters,
+            String dateColumn,
+            Resource resource) {
         List<Condition> conditions = new ArrayList<>();
         if (filters != null) {
             QueryFilter.validateQueryFilters(filters, resource);
@@ -257,18 +278,20 @@ public abstract class AbstractJdbcRepository {
             }
         }
         return conditions.stream()
-            .reduce(DSL.noCondition(), Condition::and);
+                .reduce(DSL.noCondition(), Condition::and);
     }
 
     /**
      *
-     * @param dateColumn the JDBC column name of the logical date to filter on with {@link io.kestra.core.models.QueryFilter.Field#START_DATE} and/or {@link QueryFilter.Field#END_DATE}
+     * @param dateColumn the JDBC column name of the logical date to filter on with
+     *                   {@link io.kestra.core.models.QueryFilter.Field#START_DATE}
+     *                   and/or {@link QueryFilter.Field#END_DATE}
      */
     protected Condition getConditionOnField(
-        QueryFilter.Field field,
-        Object value,
-        QueryFilter.Op operation,
-        @Nullable String dateColumn) {
+            QueryFilter.Field field,
+            Object value,
+            QueryFilter.Op operation,
+            @Nullable String dateColumn) {
         if (field.equals(QueryFilter.Field.QUERY)) {
             return handleQuery(value, operation);
         }
@@ -287,9 +310,11 @@ public abstract class AbstractJdbcRepository {
         }
 
         // Special handling for START_DATE and END_DATE
-        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE || field == QueryFilter.Field.UPDATED || field == QueryFilter.Field.CREATED) {
+        if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE
+                || field == QueryFilter.Field.UPDATED || field == QueryFilter.Field.CREATED) {
             if (dateColumn == null) {
-                throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
+                throw new InvalidQueryFiltersException(
+                        "When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
             return getDateCondition(value, operation, dateColumn);
         }
@@ -351,9 +376,9 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected Condition defaultHandlers(
-        QueryFilter.Field field,
-        Object value,
-        QueryFilter.Op operation) {
+            QueryFilter.Field field,
+            Object value,
+            QueryFilter.Op operation) {
         // Convert the field name to lowercase and quote it
         Name columnName = getColumnName(field);
 
@@ -384,7 +409,7 @@ public abstract class AbstractJdbcRepository {
             case PREFIX -> {
                 String s = requireStringValue(value, "PREFIX");
                 yield DSL.field(columnName).eq(s)
-                    .or(DSL.field(columnName).startsWith(s + "."));
+                        .or(DSL.field(columnName).startsWith(s + "."));
             }
             default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         };
@@ -403,8 +428,8 @@ public abstract class AbstractJdbcRepository {
 
     private Condition getDateCondition(Object value, Op operation, String dateColumn) {
         OffsetDateTime dateTime = (value instanceof ZonedDateTime)
-            ? ((ZonedDateTime) value).toOffsetDateTime()
-            : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
+                ? ((ZonedDateTime) value).toOffsetDateTime()
+                : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
         return applyDateCondition(dateTime, operation, dateColumn);
     }
 
@@ -412,12 +437,10 @@ public abstract class AbstractJdbcRepository {
         if (o == null)
             return null;
 
-        if (
-            o instanceof Boolean
+        if (o instanceof Boolean
                 || o instanceof Number
                 || o instanceof Character
-                || o instanceof String
-        ) {
+                || o instanceof String) {
             return o;
         }
 
@@ -489,7 +512,7 @@ public abstract class AbstractJdbcRepository {
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
-            .in(state.stream().map(Enum::name).toList());
+                .in(state.stream().map(Enum::name).toList());
     }
 
     private Condition handleQuery(Object value, QueryFilter.Op operation) {
@@ -507,12 +530,37 @@ public abstract class AbstractJdbcRepository {
         ChildFilter childFilter = (value instanceof String val) ? ChildFilter.valueOf(val) : (ChildFilter) value;
 
         return switch (operation) {
-            case EQUALS -> childFilter.equals(ChildFilter.CHILD) ? field("trigger_execution_id").isNotNull() : field("trigger_execution_id").isNull();
-            case NOT_EQUALS -> childFilter.equals(ChildFilter.CHILD) ? field("trigger_execution_id").isNull() : field("trigger_execution_id").isNotNull();
-            default -> throw new InvalidQueryFiltersException("Unsupported operation for child filter field: " + operation);
+            case EQUALS -> childFilter.equals(ChildFilter.CHILD) ? field("trigger_execution_id").isNotNull()
+                    : field("trigger_execution_id").isNull();
+            case NOT_EQUALS -> childFilter.equals(ChildFilter.CHILD) ? field("trigger_execution_id").isNull()
+                    : field("trigger_execution_id").isNotNull();
+            default ->
+                throw new InvalidQueryFiltersException("Unsupported operation for child filter field: " + operation);
         };
     }
 
+    /**
+     * Handles the MIN_LEVEL filter field.
+     *
+     * NOTE: Historically the {@code EQUALS} operation on {@code MIN_LEVEL} was used
+     * to
+     * represent "at or above" semantics – i.e., it expands the provided level to
+     * include all
+     * higher‑severity levels. With the introduction of the explicit
+     * {@code AT_OR_BELOW}
+     * operator this method now treats both {@code EQUALS} and {@code AT_OR_BELOW}
+     * the same
+     * way, delegating to {@link #minLevelCondition(Level)} which expands the level
+     * list.
+     *
+     * This behaviour is retained for backward compatibility; therefore, an
+     * {@code EQUALS}
+     * filter on {@code MIN_LEVEL} does **not** mean a strict equality check but
+     * rather the
+     * "at or above"/"at or below" semantics. Future maintainers should be aware of
+     * this
+     * when adding new operators or refactoring filter logic.
+     */
     private Condition handleMinLevelField(Object value, QueryFilter.Op operation) {
         Level minLevel = value instanceof Level ? (Level) value : Level.valueOf((String) value);
 
@@ -520,8 +568,7 @@ public abstract class AbstractJdbcRepository {
             case EQUALS, AT_OR_BELOW -> minLevelCondition(minLevel);
             case NOT_EQUALS -> minLevelCondition(minLevel).not();
             default -> throw new InvalidQueryFiltersException(
-                "Unsupported operation for MIN_LEVEL: " + operation
-            );
+                    "Unsupported operation for MIN_LEVEL: " + operation);
         };
     }
 
@@ -557,24 +604,32 @@ public abstract class AbstractJdbcRepository {
                 }
                 FlowScope scope = flowScopes.getFirst();
                 yield switch (operation) {
-                    case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace) : field("namespace").eq(systemNamespace);
-                    case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace) : field("namespace").ne(systemNamespace);
+                    case EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").ne(systemNamespace)
+                            : field("namespace").eq(systemNamespace);
+                    case NOT_EQUALS -> FlowScope.USER.equals(scope) ? field("namespace").eq(systemNamespace)
+                            : field("namespace").ne(systemNamespace);
                     default -> throw new InvalidQueryFiltersException("Unreachable");
                 };
             }
             case IN -> {
                 boolean includesUser = flowScopes.contains(FlowScope.USER);
                 boolean includesSystem = flowScopes.contains(FlowScope.SYSTEM);
-                if (includesUser && includesSystem) yield DSL.noCondition();
-                else if (includesUser) yield field("namespace").ne(systemNamespace);
-                else yield field("namespace").eq(systemNamespace);
+                if (includesUser && includesSystem)
+                    yield DSL.noCondition();
+                else if (includesUser)
+                    yield field("namespace").ne(systemNamespace);
+                else
+                    yield field("namespace").eq(systemNamespace);
             }
             case NOT_IN -> {
                 boolean excludesUser = flowScopes.contains(FlowScope.USER);
                 boolean excludesSystem = flowScopes.contains(FlowScope.SYSTEM);
-                if (excludesUser && excludesSystem) yield DSL.falseCondition();
-                else if (excludesUser) yield field("namespace").eq(systemNamespace);
-                else yield field("namespace").ne(systemNamespace);
+                if (excludesUser && excludesSystem)
+                    yield DSL.falseCondition();
+                else if (excludesUser)
+                    yield field("namespace").eq(systemNamespace);
+                else
+                    yield field("namespace").ne(systemNamespace);
             }
             default -> throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
         };
@@ -602,20 +657,22 @@ public abstract class AbstractJdbcRepository {
     }
 
     protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
-        DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
-        Map<F, String> fieldsMapping,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        Set<F> dateFields,
-        @Nullable DateUtils.GroupType groupType) {
+            DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
+            Map<F, String> fieldsMapping,
+            ZonedDateTime startDate,
+            ZonedDateTime endDate,
+            Set<F> dateFields,
+            @Nullable DateUtils.GroupType groupType) {
         return descriptors.getColumns().entrySet().stream()
-            .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
-            .map(entry -> {
-                Duration duration = Duration.between(startDate, endDate == null ? ZonedDateTime.now() : endDate);
-                DateUtils.GroupType effectiveGroupType = groupType != null ? groupType : DateUtils.groupByType(duration);
-                return formatDateField(fieldsMapping.get(entry.getValue().getField()), effectiveGroupType).as(entry.getKey());
-            })
-            .toList();
+                .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
+                .map(entry -> {
+                    Duration duration = Duration.between(startDate, endDate == null ? ZonedDateTime.now() : endDate);
+                    DateUtils.GroupType effectiveGroupType = groupType != null ? groupType
+                            : DateUtils.groupByType(duration);
+                    return formatDateField(fieldsMapping.get(entry.getValue().getField()), effectiveGroupType)
+                            .as(entry.getKey());
+                })
+                .toList();
 
     }
 }
