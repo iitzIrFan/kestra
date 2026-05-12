@@ -207,6 +207,7 @@ public class QueryFilterTest {
                 Field.MIN_LEVEL, Resource.LOG,
                 Set.of(
                     Op.EQUALS,
+                    Op.AT_OR_BELOW,
                     Op.NOT_EQUALS
                 )
             ),

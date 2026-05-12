@@ -35,6 +35,7 @@ public record QueryFilter(
 
     public enum Op {
         EQUALS,
+        AT_OR_BELOW,
         NOT_EQUALS,
         GREATER_THAN,
         LESS_THAN,
@@ -61,6 +62,7 @@ public record QueryFilter(
     public <T extends Enum<T>> AbstractFilter<T> toDashboardFilterBuilder(T field, Object value) {
         return switch (this.operation) {
             case EQUALS -> EqualTo.<T> builder().field(field).value(value).build();
+            case AT_OR_BELOW -> EqualTo.<T> builder().field(field).value(value).build();
             case NOT_EQUALS -> NotEqualTo.<T> builder().field(field).value(value).build();
             case GREATER_THAN -> GreaterThan.<T> builder().field(field).value(value).build();
             case LESS_THAN -> LessThan.<T> builder().field(field).value(value).build();
@@ -290,7 +292,7 @@ public record QueryFilter(
         MIN_LEVEL("level") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.EQUALS, Op.AT_OR_BELOW, Op.NOT_EQUALS);
             }
         },
         PATH("path") {

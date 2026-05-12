@@ -144,6 +144,7 @@ public abstract class AbstractLogRepositoryTest {
             QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("executionId")).operation(Op.IN).build(),
             QueryFilter.builder().field(Field.EXECUTION_ID).value(List.of("anotherId")).operation(Op.NOT_IN).build(),
             QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.DEBUG).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.INFO).operation(Op.AT_OR_BELOW).build(),
             QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.ERROR).operation(Op.NOT_EQUALS).build()
         );
     }

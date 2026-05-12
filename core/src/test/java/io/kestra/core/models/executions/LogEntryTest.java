@@ -3,10 +3,24 @@ package io.kestra.core.models.executions;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class LogEntryTest {
+    @Test
+    void should_find_levels_at_or_below() {
+        assertThat(LogEntry.findLevelsAtOrBelow(Level.TRACE)).containsExactly(
+            Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR
+        );
+        assertThat(LogEntry.findLevelsAtOrBelow(Level.INFO)).containsExactly(
+            Level.INFO, Level.WARN, Level.ERROR
+        );
+        assertThat(LogEntry.findLevelsAtOrBelow(Level.ERROR)).containsExactly(Level.ERROR);
+        assertThat(LogEntry.findLevelsAtOrBelow(null)).containsExactly(
+            Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR
+        );
+    }
 
     @Test
     public void should_format_to_log_map() {

@@ -65,12 +65,19 @@ public class LogEntry implements TenantInterface, DispatchEvent {
     ExecutionKind executionKind;
 
     public static List<Level> findLevelsByMin(Level minLevel) {
+        return findLevelsAtOrBelow(minLevel);
+    }
+
+    public static List<Level> findLevelsAtOrBelow(Level minLevel) {
         if (minLevel == null) {
-            return Arrays.asList(Level.values());
+            return Arrays.stream(Level.values())
+                .sorted(Comparator.comparingInt(Level::toInt))
+                .toList();
         }
 
         return Arrays.stream(Level.values())
             .filter(level -> level.toInt() >= minLevel.toInt())
+            .sorted(Comparator.comparingInt(Level::toInt))
             .toList();
     }
 

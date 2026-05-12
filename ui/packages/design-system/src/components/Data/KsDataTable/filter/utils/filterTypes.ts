@@ -1,5 +1,6 @@
 export enum Comparators {
     EQUALS = "=",
+    AT_OR_BELOW = "AT_OR_BELOW",
     NOT_EQUALS = "!=",
     IN = "IN",
     NOT_IN = "NOT_IN",
@@ -92,6 +93,7 @@ export interface TableOptions {
 
 export const COMPARATOR_LABELS: Record<Comparators, string> = {
     [Comparators.EQUALS]: "Equals",
+    [Comparators.AT_OR_BELOW]: "at or below",
     [Comparators.NOT_EQUALS]: "Not Equals",
     [Comparators.IN]: "In",
     [Comparators.NOT_IN]: "Not In",
@@ -108,6 +110,7 @@ export const COMPARATOR_LABELS: Record<Comparators, string> = {
 
 export const COMPARATOR_DESCRIPTIONS: Record<Comparators, string> = {
     [Comparators.EQUALS]: "filter.comparator_descriptions.EQUALS",
+    [Comparators.AT_OR_BELOW]: "filter.comparator_descriptions.AT_OR_BELOW",
     [Comparators.NOT_EQUALS]: "filter.comparator_descriptions.NOT_EQUALS",
     [Comparators.IN]: "filter.comparator_descriptions.IN",
     [Comparators.NOT_IN]: "filter.comparator_descriptions.NOT_IN",

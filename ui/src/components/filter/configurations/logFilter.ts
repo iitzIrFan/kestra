@@ -54,7 +54,7 @@ export const useLogFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "level",
                     label: t("filter.level_log_executions.label"),
                     description: t("filter.level.description"),
-                    comparators: [Comparators.EQUALS],
+                    comparators: [Comparators.AT_OR_BELOW],
                     valueType: "select",
                     valueProvider: async () => {
                         const {VALUES} = useValues("logs");

@@ -2,12 +2,13 @@ import type {
     LocationQuery,
     LocationQueryRaw,
     LocationQueryValue,
-    LocationQueryValueRaw
+    LocationQueryValueRaw,
 } from "vue-router";
 import type {AppliedFilter} from "./filterTypes";
 
 const LEVEL_FILTER_PREFIX = "filters[level][";
 const LEVEL_EQUALS_FILTER_KEY = "filters[level][EQUALS]";
+const LEVEL_AT_OR_BELOW_FILTER_KEY = "filters[level][AT_OR_BELOW]";
 const LEGACY_LEVEL_FILTER_KEY = "level";
 
 const firstStringValue = (
@@ -15,7 +16,7 @@ const firstStringValue = (
         | LocationQueryValue
         | LocationQueryValueRaw
         | (LocationQueryValue | LocationQueryValueRaw)[]
-        | undefined
+        | undefined,
 ) => {
     if (Array.isArray(value)) {
         return typeof value[0] === "string" ? value[0] : undefined;
@@ -26,6 +27,7 @@ const firstStringValue = (
 
 export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw) => {
     const value =
+        firstStringValue(query[LEVEL_AT_OR_BELOW_FILTER_KEY]) ??
         firstStringValue(query[LEVEL_EQUALS_FILTER_KEY]) ??
         firstStringValue(query[LEGACY_LEVEL_FILTER_KEY]);
 
@@ -36,7 +38,9 @@ export const hasUnsupportedRouteLevelComparator = (query: LocationQuery | Locati
     Object.keys(query).some(
         (key) =>
             key === LEGACY_LEVEL_FILTER_KEY ||
-            (key.startsWith(LEVEL_FILTER_PREFIX) && key !== LEVEL_EQUALS_FILTER_KEY)
+            (key.startsWith(LEVEL_FILTER_PREFIX) &&
+                key !== LEVEL_EQUALS_FILTER_KEY &&
+                key !== LEVEL_AT_OR_BELOW_FILTER_KEY),
     );
 
 export const readAppliedLevelFilter = (filters: AppliedFilter[]) => {
@@ -57,7 +61,7 @@ export const readAppliedLevelFilter = (filters: AppliedFilter[]) => {
 
 export const normalizeRouteLevelFilter = (
     query: Record<string, any>,
-    level: string | undefined
+    level: string | undefined,
 ) => {
     const normalized = {...query};
 
@@ -68,7 +72,7 @@ export const normalizeRouteLevelFilter = (
     });
 
     if (level) {
-        normalized[LEVEL_EQUALS_FILTER_KEY] = level;
+        normalized[LEVEL_AT_OR_BELOW_FILTER_KEY] = level;
     }
 
     delete normalized[LEGACY_LEVEL_FILTER_KEY];

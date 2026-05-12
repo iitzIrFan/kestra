@@ -517,7 +517,7 @@ public abstract class AbstractJdbcRepository {
         Level minLevel = value instanceof Level ? (Level) value : Level.valueOf((String) value);
 
         return switch (operation) {
-            case EQUALS -> minLevelCondition(minLevel);
+            case EQUALS, AT_OR_BELOW -> minLevelCondition(minLevel);
             case NOT_EQUALS -> minLevelCondition(minLevel).not();
             default -> throw new InvalidQueryFiltersException(
                 "Unsupported operation for MIN_LEVEL: " + operation
