@@ -21,15 +21,15 @@ import lombok.Builder;
 
 @Builder
 public record QueryFilter(
-        Field field,
-        Op operation,
-        Object value) {
+    Field field,
+    Op operation,
+    Object value) {
 
     @JsonCreator
     public QueryFilter(
-            @JsonProperty("field") Field field,
-            @JsonProperty("operation") Op operation,
-            @JsonProperty("value") Object value) {
+        @JsonProperty("field") Field field,
+        @JsonProperty("operation") Op operation,
+        @JsonProperty("value") Object value) {
         this.field = field;
         this.operation = operation;
         this.value = value;
@@ -372,7 +372,7 @@ public record QueryFilter(
         };
 
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
-                .collect(Collectors.toMap(Field::value, Function.identity()));
+            .collect(Collectors.toMap(Field::value, Function.identity()));
 
         public abstract List<Op> supportedOp();
 
@@ -617,8 +617,8 @@ public record QueryFilter(
 
         private static FieldOp toFieldInfo(Field field) {
             List<Operation> operations = field.supportedOp().stream()
-                    .map(Resource::toOperation)
-                    .toList();
+                .map(Resource::toOperation)
+                .toList();
             return new FieldOp(field.name().toLowerCase(), field.value(), operations);
         }
 
