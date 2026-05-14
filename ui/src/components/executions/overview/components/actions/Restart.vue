@@ -243,9 +243,9 @@
                     revision.revision +
                     (revision.revision === props.execution.flowRevision
                         ? ` (${t("current")})`
-                        : "")
+                        : ""),
             }))
-            .reverse()
+            .reverse(),
     )
 
     const enabled = computed(() => {
@@ -274,7 +274,7 @@
             ? props.taskRun?.id
                 ? t("replay from task tooltip", {taskId: props.taskRun.taskId})
                 : t("replay from beginning tooltip")
-            : t("restart tooltip", {state: props.execution.state?.current})
+            : t("restart tooltip", {state: props.execution.state?.current}),
     )
 
     const openReplayWithInputsDialog = () => {
@@ -292,7 +292,7 @@
             flowId: props.execution.flowId,
             namespace: props.execution.namespace,
             revision,
-            store: true
+            store: true,
         })
         isReplayWithInputsOpen.value = true
     }
@@ -302,13 +302,13 @@
         currentFlow.value = undefined
         flowStore.loadRevisions({
             namespace: props.execution.namespace,
-            id: props.execution.flowId
+            id: props.execution.flowId,
         })
         currentFlow.value = await executionsStore.loadFlowForExecution({
             namespace: props.execution.namespace,
             flowId: props.execution.flowId,
             revision: props.execution.flowRevision,
-            store: true
+            store: true,
         })
     }
 
@@ -349,7 +349,7 @@
         const response = await (executionsStore[method] as any)({
             executionId: props.execution.id,
             taskRunId: props.taskRun && props.isReplay ? props.taskRun.id : undefined,
-            revision: revisionsSelected.value
+            revision: revisionsSelected.value,
         })
 
         const newExecution = response.data
@@ -364,8 +364,8 @@
                     flowId: newExecution.flowId,
                     id: newExecution.id,
                     tab: "gantt",
-                    tenant: router.currentRoute.value.params.tenant
-                }
+                    tenant: router.currentRoute.value.params.tenant,
+                },
             }).href
         } else {
             window.setTimeout(() => window.location.reload(), 500)
@@ -381,7 +381,7 @@
             namespace: props.execution.namespace,
             flowId: props.execution.flowId,
             revision: newRevision,
-            store: false
+            store: false,
         })
     })
 
