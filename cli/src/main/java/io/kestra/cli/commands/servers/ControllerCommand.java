@@ -6,13 +6,14 @@ import java.util.Map;
 
 import io.kestra.core.models.ServerType;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 import io.kestra.core.worker.Controller;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
+import io.kestra.core.utils.Await;
 
 @Command(
     name = "controller",
@@ -24,7 +25,7 @@ public class ControllerCommand extends AbstractServerCommand {
     private List<String> ignoreQueueRecords = Collections.emptyList();
 
     @Inject
-    private ApplicationContext applicationContext;
+    private Controller controller;
 
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
@@ -42,10 +43,9 @@ public class ControllerCommand extends AbstractServerCommand {
 
         super.call();
 
-        Controller controller = applicationContext.getBean(Controller.class);
         controller.start();
 
-        Await.until(() -> !this.applicationContext.isRunning());
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

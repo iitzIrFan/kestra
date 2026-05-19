@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.flow;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.annotations.VisibleForTesting;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -13,17 +12,15 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
-import io.kestra.core.models.tasks.FlowableTask;
+import io.kestra.core.models.property.URIFetcher;
 import io.kestra.core.models.tasks.ResolvedTask;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.GraphUtils;
-import io.kestra.core.utils.MapUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import lombok.*;
@@ -31,10 +28,12 @@ import lombok.experimental.SuperBuilder;
 import org.apache.commons.lang3.tuple.Pair;
 
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 @SuperBuilder
 @ToString
@@ -44,17 +43,20 @@ import java.util.stream.Stream;
 @Schema(
     title = "Execute child tasks for each value in a list.",
     description = """
-        Renders `values` (JSON array, YAML list, or expression) and runs the child task group once per item. The current item is available as `item.value`; `item.index` exposes the index.
+        Renders `values` (list, map, map, URI, or expression) and runs the child task group once per item.
+        The current item is available as `item.value`; `item.index` exposes the index; if the values was a map, the key is available as `item.key`.
+        It values was an internal storage URI, the loop will perform one iteration per line.
 
-        Control parallelism with `concurrencyLimit` (0 = unlimited, 1 = fully serialized, N = up to N concurrent task groups). To run tasks inside each group in parallel, wrap them in a `Parallel` task."""
+        Control parallelism with `concurrencyLimit` (0 = unlimited, 1 = fully serialized, N = up to N concurrent task groups). To run tasks inside each group in parallel, wrap them in a `Parallel` task.
+
+        Each loop iteration will execute in an isolated context, to access any loop iteration task outputs outside of the loop, you need to define `outputs`."""
 )
 @Plugin(
     examples = {
         @Example(
             full = true,
             title = """
-                The `{{ item.value }}` from the `loop` task is available only to direct child tasks \
-                such as the `before_if` and the `if` tasks.""",
+                The `{{ item.value }}` from the `loop` task is available to all tasks of the loop, even nested.""",
             code = """
                 id: for_loop_example
                 namespace: company.team
@@ -181,7 +183,7 @@ import java.util.stream.Stream;
                               - id: full_table_name
                                 type: io.kestra.plugin.core.log.Log
                                 message: |
-                                  Full table name: {{item.parents[1].item.value }}_{{item.parent.value}}_{{item.value}}
+                                  Full table name: {{item.parents[1].value }}_{{item.parent.value}}_{{item.value}}
                                   Direct/current loop (months): {{item.value}}
                                   Value of loop one higher up (years): {{item.parents[0].value}}
                                   Further up (table types): {{item.parents[1].value}}
@@ -189,28 +191,14 @@ import java.util.stream.Stream;
         ),
     }
 )
-public class Loop extends Task implements FlowableTask<Loop.Output> {
+public class Loop extends AbstractBranch<Loop.Output> {
     public static final String ITERATION_COUNT_OUTPUT = "iterationCount";
     public static final String RUNNING_ITERATIONS_OUTPUT = "runningIterations";
     public static final String TERMINATED_ITERATIONS_OUTPUT = "terminatedIterations";
     public static final String NEXT_OFFSET_OUTPUT = "nextOffset";
+    public static final String OUTPUTS_OUTPUT = "outputs";
 
-    @Valid
-    protected List<Task> errors;
-
-    @Valid
-    @JsonProperty("finally")
-    @Getter(AccessLevel.NONE)
-    protected List<Task> _finally;
-
-    public List<Task> getFinally() {
-        return this._finally;
-    }
-
-    @Valid
-    @PluginProperty
-    @NotEmpty(message = "The 'tasks' property cannot be empty")
-    private List<Task> tasks;
+    private static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
 
     @NotNull
     @PluginProperty(dynamic = true)
@@ -239,16 +227,35 @@ public class Loop extends Task implements FlowableTask<Loop.Output> {
             """
     )
     @PluginProperty
-    private final Integer concurrencyLimit = 1;
+    private Integer concurrencyLimit = 1;
 
     @Builder.Default
     @Schema(
         title = "Flag specifying whether to fail the current task if any loop iteration fails or is killed."
     )
     @PluginProperty
-    private final Boolean transmitFailed = true;
+    private Boolean transmitFailed = true;
 
-    // FIXME there are a lot of duplication with Sequential but as it needs to return a different output it cannot extend it
+    @Schema(
+        title = "Output values available and exposed outside the loop.",
+        description = "They can be fetched from the execution context using the `outputs` output of the loop task run."
+    )
+    @PluginProperty(dynamic = true)
+    @Valid
+    private List<io.kestra.core.models.flows.Output> outputs;
+
+    @Schema(
+        title = "Specifies how to fetch outputs from loop iterations",
+        description = """
+            AUTO: check the values, if it comes from an internal storage URI, will resolves to STORE, otherwise, will resolved to FETCH
+            FETCH: fetch outputs from loop iterations and make them directly accessible from the execution context
+            STORE: store outputs in the internal storage from loop iterations
+            """
+    )
+    @Builder.Default
+    @NotNull
+    @PluginProperty
+    private Loop.FetchType fetchType = FetchType.AUTO;
 
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
@@ -269,27 +276,9 @@ public class Loop extends Task implements FlowableTask<Loop.Output> {
     }
 
     @Override
-    public List<Task> allChildTasks() {
-        return Stream
-            .concat(
-                this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
-                Stream.concat(
-                    this.getErrors() != null ? this.getErrors().stream() : Stream.empty(),
-                    this.getFinally() != null ? this.getFinally().stream() : Stream.empty()
-                )
-            )
-            .toList();
-    }
-
-    @Override
-    public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveTasks(this.getTasks(), parentTaskRun);
-    }
-
-    @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (!isMySubExecution(execution, parentTaskRun)) {
-            // Not in this loop's own sub-execution — state is managed by the TerminatedLoopExecutionMessageHandler.
+            // Not in this loop's own sub-execution — state is managed by the LoopExecutionEventMessageHandler.
             return Optional.empty();
         }
 
@@ -325,24 +314,75 @@ public class Loop extends Task implements FlowableTask<Loop.Output> {
         );
     }
 
+    /**
+     * Used by the Executor to compute a loop iteration's output.
+     */
+    public Map<String, Object> computeIterationOutput(RunContext runContext, Execution execution) throws IllegalVariableEvaluationException, IOException {
+        var inputAndOutput = runContext.inputAndOutput();
+        Map<String, Object> iterationOutputs = inputAndOutput.renderOutputs(this.getOutputs());
+        iterationOutputs = inputAndOutput.typedOutputs(this.getOutputs(), execution, iterationOutputs);
+
+        var finalOutputMode = this.getFetchType() == FetchType.AUTO ? guessOutputMode(runContext) : this.getFetchType();
+        if (finalOutputMode == FetchType.STORE) {
+            // store the output and replace it by a URI
+            byte[] content = ION_MAPPER.writeValueAsBytes(iterationOutputs);
+            Path outputFile = runContext.workingDir().createTempFile(content, ".ion");
+            URI outputUri = runContext.storage().putFile(outputFile.toFile());
+            return Map.of("uri", outputUri.toString());
+        }
+
+        return iterationOutputs;
+    }
+
+    private FetchType guessOutputMode(RunContext runContext) throws IllegalVariableEvaluationException {
+        if (values instanceof String str) {
+            var rendered = runContext.render(str);
+            return URIFetcher.supports(rendered) ? FetchType.STORE : FetchType.FETCH;
+        }
+        return FetchType.FETCH;
+    }
+
+    // NOTE: this is to document outputs, they are always computed by the executor itself
     @Builder
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
+        @Schema(title = "The total number of iterations")
+        private Integer iterationCount;
+
+        @Schema(title = "The count of running iterations")
+        private Integer runningIterations;
+
+        @Schema(title = "The count of terminated iterations")
+        private Integer terminatedIterations;
+
         @Schema(
-            title = "The counter of iterations for each loop branch execution"
+            title = "The list of loop iteration (task runs) outputs, accessible outside of the loop for subsequent tasks",
+            description = "Outputs must first be defined using the `outputs` property."
         )
-        private Integer iterations;
+        private List<LoopOutput> outputs;
     }
 
-    @Override
-    public Output outputs(RunContext runContext) throws Exception {
-        var currentOutputs = runContext.currentOutput();
-        if (!MapUtils.isEmpty(currentOutputs) && currentOutputs.containsKey("iterations")) {
-            Integer iterations = (Integer) currentOutputs.get("iterations");
-            return Output.builder().iterations(iterations).build();
-        } else {
-            return Output.builder().iterations(0).build();
-        }
+    @Builder
+    @Getter
+    public static class LoopOutput {
+        @Schema(title = "The task run item information")
+        private LoopItem item;
+
+        @Schema(title = "The task run outputs")
+        private Map<String, Object> outputs;
+    }
+
+    @Builder
+    @Getter
+    public static class LoopItem {
+        @Schema(title = "The task run value")
+        private String value;
+
+        @Schema(title = "The task run iteration number")
+        private Integer iteration;
+
+        @Schema(title = "The task run key, if applicable")
+        private String key;
     }
 
     public boolean isMySubExecution(Execution execution, TaskRun parentTaskRun) {
@@ -358,7 +398,6 @@ public class Loop extends Task implements FlowableTask<Loop.Output> {
      * @param valuesUri  the rendered URI pointing to the ION file
      * @return a {@link UriInit} holding totalCount, active limit, first batch of values, and next byte offset
      */
-    @VisibleForTesting
     public UriInit initFromUri(RunContext runContext, String valuesUri) throws IOException, IllegalVariableEvaluationException {
         int rawLimit = this.concurrencyLimit == 0 ? Integer.MAX_VALUE : this.concurrencyLimit;
         var init = FlowableUtils.readAndCountLoopValuesFromUri(runContext, valuesUri, rawLimit);
@@ -374,7 +413,6 @@ public class Loop extends Task implements FlowableTask<Loop.Output> {
      * @param runContext the run context
      * @return a {@link ValuesInit} holding totalCount, active limit, and resolved values
      */
-    @VisibleForTesting
     public ValuesInit initFromValues(RunContext runContext) throws IllegalVariableEvaluationException {
         var either = FlowableUtils.resolveValues(runContext, this.values);
         int size = either.isLeft() ? either.getLeft().size() : either.getRight().size();
@@ -387,4 +425,6 @@ public class Loop extends Task implements FlowableTask<Loop.Output> {
 
     /** Holds initialization data computed from in-memory (list or map) values. */
     public record ValuesInit(int totalCount, int limit, Either<List<String>, List<Pair<String, String>>> values) {}
+
+    public enum FetchType { AUTO, FETCH, STORE }
 }

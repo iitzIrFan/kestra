@@ -25,7 +25,7 @@ import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@KestraTest(startRunner = true)
+@KestraTest(startRunner = true, startSystemWorker = true)
 class PurgeLogsTest {
 
     @Inject
@@ -128,6 +128,28 @@ class PurgeLogsTest {
         var outputs = taskOutputService.getOutputs(execution.getTaskRunList().getFirst());
         assertThat((int) outputs.get("executionLogsCount")).isZero();
         assertThat((int) outputs.get("nonExecutionLogsCount")).isPositive();
+    }
+
+    @Test
+    @LoadFlows("flows/valids/purge_logs_with_batch_size.yaml")
+    void run_with_batch_size() throws Exception {
+        for (int i = 0; i < 5; i++) {
+            logRepository.save(
+                LogEntry.builder()
+                    .namespace("namespace")
+                    .flowId("flowId")
+                    .tenantId(MAIN_TENANT)
+                    .timestamp(Instant.now())
+                    .level(Level.INFO)
+                    .message("Log entry " + i)
+                    .build()
+            );
+        }
+
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "purge_logs_with_batch_size");
+
+        assertTrue(execution.getState().isSuccess());
+        assertThat((int) taskOutputService.getOutputs(execution.getTaskRunList().getFirst()).get("count")).isGreaterThanOrEqualTo(5);
     }
 
     @org.junit.jupiter.api.parallel.Execution(ExecutionMode.SAME_THREAD)

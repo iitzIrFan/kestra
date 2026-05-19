@@ -9,6 +9,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.SystemTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
@@ -70,7 +71,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
+public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output>, SystemTask {
     @Schema(
         title = "Namespace of logs that need to be purged",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
@@ -121,6 +122,12 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
     @Builder.Default
     private Property<Boolean> purgeNonExecutionLogs = Property.ofValue(true);
 
+    @Schema(
+        title = "The number of log rows deleted per batch",
+        description = "Only applies on MySQL. When set, deletion runs in batches of this size using `DELETE ... LIMIT n` to stay within `group_replication_transaction_size_limit`. When not set, all matching rows are deleted in a single transaction."
+    )
+    private Property<Integer> batchSize;
+
     @Override
     public Output run(RunContext runContext) throws Exception {
         ExecutionLogService logService = ((DefaultRunContext) runContext).services().additionalService(ExecutionLogService.class);
@@ -147,7 +154,8 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
             renderedDate != null ? ZonedDateTime.parse(renderedDate) : null,
             ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()),
             execLogs,
-            nonExecLogs
+            nonExecLogs,
+            runContext.render(this.batchSize).as(Integer.class).orElse(null)
         );
 
         return Output.builder()

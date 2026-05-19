@@ -21,7 +21,11 @@ export const SECTIONS = {
         "Task Runners",
         "Best Practices",
     ],
-    "Manage Kestra": ["Administrator Guide", "Migration Guide", "Performance"],
+    "Manage Kestra": [
+        "Administrator Guide",
+        "Migration Guide",
+        "Performance",
+    ],
     "Reference Docs": [
         "Configuration",
         "Releases & LTS Policy",
@@ -35,5 +39,5 @@ export const DISABLED_PAGES = [
     "docs/api-reference",
     "docs/terraform/data-sources",
     "docs/terraform/guides",
-    "docs/terraform/resources"
+    "docs/terraform/resources",
 ]

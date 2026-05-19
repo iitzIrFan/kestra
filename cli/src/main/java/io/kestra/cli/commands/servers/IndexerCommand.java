@@ -9,11 +9,12 @@ import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.services.IgnoreExecutionService;
-import io.kestra.core.utils.Await;
+import org.awaitility.Awaitility;
 
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import picocli.CommandLine;
+import io.kestra.core.utils.Await;
 
 @CommandLine.Command(
     name = "indexer",
@@ -21,7 +22,7 @@ import picocli.CommandLine;
 )
 public class IndexerCommand extends AbstractServerCommand {
     @Inject
-    private ApplicationContext applicationContext;
+    private Indexer indexer;
     @Inject
     private IgnoreExecutionService ignoreExecutionService;
 
@@ -45,10 +46,9 @@ public class IndexerCommand extends AbstractServerCommand {
 
         super.call();
 
-        Indexer indexer = applicationContext.getBean(Indexer.class);
         indexer.run();
 
-        Await.until(() -> !this.applicationContext.isRunning());
+        Await.await().forever().until(() -> !this.applicationContext.isRunning());
 
         return 0;
     }

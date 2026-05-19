@@ -8,6 +8,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
+import io.kestra.core.models.tasks.SystemTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
@@ -51,7 +52,7 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class PurgeExecutions extends Task implements RunnableTask<PurgeExecutions.Output> {
+public class PurgeExecutions extends Task implements RunnableTask<PurgeExecutions.Output>, SystemTask {
     @Schema(
         title = "Namespace whose flows need to be purged, or namespace of the flow that needs to be purged",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
@@ -112,7 +113,7 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
 
     @Schema(
         title = "The size of the bulk delete",
-        description = "For performance, deletion is made by batch of by default 100 executions/logs/metrics."
+        description = "Deletion is done in batches of this many executions (default 100). If executions have a large number of logs, use `PurgeLogs` instead to control how many log rows are deleted per transaction."
     )
     @Builder.Default
     @NotNull
