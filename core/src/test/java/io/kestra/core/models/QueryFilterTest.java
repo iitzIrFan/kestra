@@ -206,9 +206,7 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.MIN_LEVEL, Resource.LOG,
                 Set.of(
-                    Op.EQUALS,
-                    Op.LESS_THAN_OR_EQUAL_TO,
-                    Op.NOT_EQUALS
+                    Op.GREATER_THAN_OR_EQUAL_TO
                 )
             ),
 
@@ -830,12 +828,13 @@ public class QueryFilterTest {
             buildQueryFiltersForOperations(
                 Field.MIN_LEVEL, Resource.LOG,
                 Set.of(
+                    Op.EQUALS,
                     Op.GREATER_THAN,
                     Op.LESS_THAN,
-                    Op.GREATER_THAN_OR_EQUAL_TO,
                     Op.LESS_THAN_OR_EQUAL_TO,
                     Op.IN,
                     Op.NOT_IN,
+                    Op.NOT_EQUALS,
                     Op.STARTS_WITH,
                     Op.ENDS_WITH,
                     Op.CONTAINS,

@@ -24,7 +24,7 @@ describe("log level query helpers", () => {
         })
     })
 
-    it("accepts EQUALS and LESS_THAN_OR_EQUAL_TO and rejects other comparators", () => {
+    it("accepts EQUALS and GREATER_THAN_OR_EQUAL_TO and rejects other comparators", () => {
         expect(hasUnsupportedRouteLevelComparator({"filters[level][EQUALS]": "INFO"})).toBe(false)
         expect(hasUnsupportedRouteLevelComparator({"filters[level][GREATER_THAN_OR_EQUAL_TO]": "INFO"})).toBe(false)
         expect(hasUnsupportedRouteLevelComparator({"filters[level][NOT_EQUALS]": "INFO"})).toBe(true)

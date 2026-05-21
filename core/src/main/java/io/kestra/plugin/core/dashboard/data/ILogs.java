@@ -41,12 +41,16 @@ public interface ILogs extends IData<ILogs.Fields> {
             if (!minLevelFilters.isEmpty()) {
                 updatedWhere.removeIf(filter -> filter.getField().equals(Fields.LEVEL));
                 minLevelFilters.forEach(f -> {
-                    Object v = f.value();
-                    try {
-                        Level level = v instanceof Level ? (Level) v : Level.valueOf(v.toString().toUpperCase());
-                        List<Object> names = LogEntry.findLevelsAtOrAbove(level).stream().map(Enum::name).map(Object.class::cast).toList();
-                        updatedWhere.add(In.<Fields>builder().field(Fields.LEVEL).values(names).build());
-                    } catch (Exception e) {
+                    if (f.operation() == QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO) {
+                        Object v = f.value();
+                        try {
+                            Level level = v instanceof Level ? (Level) v : Level.valueOf(v.toString().toUpperCase());
+                            List<Object> names = LogEntry.findLevelsAtOrAbove(level).stream().map(Enum::name).map(Object.class::cast).toList();
+                            updatedWhere.add(In.<Fields>builder().field(Fields.LEVEL).values(names).build());
+                        } catch (Exception e) {
+                            updatedWhere.add(f.toDashboardFilterBuilder(Fields.LEVEL, f.value()));
+                        }
+                    } else {
                         updatedWhere.add(f.toDashboardFilterBuilder(Fields.LEVEL, f.value()));
                     }
                 });

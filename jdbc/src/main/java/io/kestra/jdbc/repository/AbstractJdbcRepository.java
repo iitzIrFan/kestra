@@ -531,26 +531,19 @@ public abstract class AbstractJdbcRepository {
     /**
      * Handles the MIN_LEVEL filter field.
      *
-    * NOTE: Historically the {@code EQUALS} operation on {@code MIN_LEVEL} was used
-    * to represent "at or above" semantics – i.e., it expands the provided level to
-    * include all higher‑severity levels. This implementation treats both
-    * {@code EQUALS} and {@code LESS_THAN_OR_EQUAL_TO} the same way, delegating to
-    * {@link #minLevelCondition(Level)} which expands the level list.
+     * NOTE: MIN_LEVEL represents "at or above" semantics. The provided level is
+     * expanded to include all higher-severity levels via
+     * {@link #minLevelCondition(Level)}.
      *
-     * This behaviour is retained for backward compatibility; therefore, an
-     * {@code EQUALS}
-     * filter on {@code MIN_LEVEL} does **not** mean a strict equality check but
-     * rather the
-     * "at or above"/"at or below" semantics. Future maintainers should be aware of
-     * this
-     * when adding new operators or refactoring filter logic.
+     * This behaviour is retained for backward compatibility; therefore, MIN_LEVEL
+     * does not represent a strict equality check. Future maintainers should be
+     * aware of this when adding new operators or refactoring filter logic.
      */
     private Condition handleMinLevelField(Object value, QueryFilter.Op operation) {
         Level minLevel = value instanceof Level ? (Level) value : Level.valueOf((String) value);
 
         return switch (operation) {
             case GREATER_THAN_OR_EQUAL_TO -> minLevelCondition(minLevel);
-            case NOT_EQUALS -> minLevelCondition(minLevel).not();
             default -> throw new InvalidQueryFiltersException(
                     "Unsupported operation for MIN_LEVEL: " + operation);
         };

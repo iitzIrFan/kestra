@@ -254,7 +254,7 @@ public class RequestUtils {
             filters.add(
                 QueryFilter.builder()
                     .field(QueryFilter.Field.MIN_LEVEL)
-                    .operation(QueryFilter.Op.EQUALS)
+                    .operation(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
                     .value(minLevel.name())
                     .build()
             );

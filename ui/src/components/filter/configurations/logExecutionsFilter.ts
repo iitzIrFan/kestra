@@ -15,7 +15,7 @@ export const useLogExecutionsFilter = (): ComputedRef<FilterConfiguration> => {
                     key: "level",
                     label: t("filter.level_log_executions.label"),
                     description: t("filter.level.description"),
-                    comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO, Comparators.NOT_EQUALS],
+                    comparators: [Comparators.GREATER_THAN_OR_EQUAL_TO],
                     showComparatorSelection: true,
                     valueType: "select",
                     valueProvider: async () => {

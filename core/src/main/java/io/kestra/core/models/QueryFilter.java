@@ -302,7 +302,7 @@ public record QueryFilter(
         MIN_LEVEL("level") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.NOT_EQUALS);
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO);
             }
         },
         PATH("path") {
