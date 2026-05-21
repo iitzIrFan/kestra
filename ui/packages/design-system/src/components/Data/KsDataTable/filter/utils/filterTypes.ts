@@ -104,7 +104,7 @@ export interface TableOptions {
 
 export const COMPARATOR_LABELS: Record<Comparators, string> = {
     [Comparators.EQUALS]: "Equals",
-    [Comparators.AT_OR_BELOW]: "at or below",
+    [Comparators.AT_OR_BELOW]: "At Or Below",
     [Comparators.NOT_EQUALS]: "Not Equals",
     [Comparators.IN]: "In",
     [Comparators.NOT_IN]: "Not In",
