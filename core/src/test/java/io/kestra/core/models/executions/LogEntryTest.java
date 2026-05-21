@@ -10,14 +10,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LogEntryTest {
     @Test
     void shouldFindLevelsAtOrBelow() {
-        assertThat(LogEntry.findLevelsAtOrBelow(Level.TRACE)).containsExactly(
+        assertThat(LogEntry.findLevelsAtOrAbove(Level.TRACE)).containsExactly(
             Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR
         );
-        assertThat(LogEntry.findLevelsAtOrBelow(Level.INFO)).containsExactly(
+        assertThat(LogEntry.findLevelsAtOrAbove(Level.INFO)).containsExactly(
             Level.INFO, Level.WARN, Level.ERROR
         );
-        assertThat(LogEntry.findLevelsAtOrBelow(Level.ERROR)).containsExactly(Level.ERROR);
-        assertThat(LogEntry.findLevelsAtOrBelow(null)).containsExactly(
+        assertThat(LogEntry.findLevelsAtOrAbove(Level.ERROR)).containsExactly(Level.ERROR);
+        assertThat(LogEntry.findLevelsAtOrAbove(null)).containsExactly(
             Level.TRACE, Level.DEBUG, Level.INFO, Level.WARN, Level.ERROR
         );
     }

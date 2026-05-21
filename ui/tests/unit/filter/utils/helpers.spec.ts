@@ -15,24 +15,24 @@ describe("Filter Helpers", () => {
         it("should decode standard and label filters", () => {
             expect(decodeSearchParams({"filters[namespace][IN]": "test-namespace"})).toEqual([
                 {field: "namespace", value: "test-namespace", operation: "IN"},
-            ]);
+            ])
 
             expect(decodeSearchParams({"filters[labels][EQUALS][env]": "prod"})).toEqual([
                 {field: "labels", value: "env:prod", operation: "EQUALS"},
-            ]);
-        });
-    });
+            ])
+        })
+    })
 
     describe("encodeFiltersToQuery", () => {
         it("should encode standard, timeRange and label filters", () => {
             const filters = [
                 {key: "namespace", comparator: Comparators.IN, value: ["test-namespace"]},
                 {key: "state", comparator: Comparators.IN, value: ["SUCCESS", "FAILED"]},
-            ];
+            ]
             expect(encodeFiltersToQuery(filters, keyOfComparator)).toEqual({
                 "filters[namespace][IN]": "test-namespace",
                 "filters[state][IN]": "SUCCESS,FAILED",
-            });
+            })
 
             const startDate = new Date("2023-01-01T00:00:00Z")
             const endDate = new Date("2023-01-31T23:59:59Z")
@@ -40,20 +40,20 @@ describe("Filter Helpers", () => {
             expect(encodeFiltersToQuery(timeRangeFilters, keyOfComparator)).toEqual({
                 "filters[startDate][GREATER_THAN_OR_EQUAL_TO]": startDate.toISOString(),
                 "filters[endDate][LESS_THAN_OR_EQUAL_TO]": endDate.toISOString(),
-            });
+            })
 
             const labelFilters = [{key: "labels", comparator: Comparators.EQUALS, value: ["env:prod", "team:backend"]}]
             expect(encodeFiltersToQuery(labelFilters, keyOfComparator)).toEqual({
                 "filters[labels][EQUALS][env]": "prod",
                 "filters[labels][EQUALS][team]": "backend",
-            });
+            })
 
-            const logLevelFilters = [{key: "level", comparator: Comparators.AT_OR_BELOW, value: "WARN"}];
+            const logLevelFilters = [{key: "level", comparator: Comparators.GREATER_THAN_OR_EQUAL_TO, value: "WARN"}]
             expect(encodeFiltersToQuery(logLevelFilters, keyOfComparator)).toEqual({
-                "filters[level][AT_OR_BELOW]": "WARN",
-            });
-        });
-    });
+                "filters[level][GREATER_THAN_OR_EQUAL_TO]": "WARN",
+            })
+        })
+    })
 
     describe("isValidFilter", () => {
         it("should validate filters correctly", () => {
@@ -74,10 +74,10 @@ describe("Filter Helpers", () => {
             const filters = [
                 {key: "namespace", value: "test1"},
                 {key: "namespace", value: "test2"},
-            ];
-            expect(getUniqueFilters(filters)).toEqual([{key: "namespace", value: "test2"}]);
-        });
-    });
+            ]
+            expect(getUniqueFilters(filters)).toEqual([{key: "namespace", value: "test2"}])
+        })
+    })
 
     describe("clearFilterQueryParams", () => {
         it("should remove only filter parameters", () => {
@@ -85,11 +85,11 @@ describe("Filter Helpers", () => {
                 "filters[namespace][IN]": "test",
                 "other[param]": "value",
                 q: "search",
-            };
-            clearFilterQueryParams(query);
-            expect(query).toEqual({"other[param]": "value", q: "search"});
-        });
-    });
+            }
+            clearFilterQueryParams(query)
+            expect(query).toEqual({"other[param]": "value", q: "search"})
+        })
+    })
 
     describe("isSearchPath", () => {
         it("should identify search paths correctly", () => {

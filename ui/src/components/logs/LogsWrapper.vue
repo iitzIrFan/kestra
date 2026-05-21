@@ -125,6 +125,12 @@
     const isFlowEdit = computed(() => route.name === "flows/update")
     const isNamespaceEdit = computed(() => route.name === "namespaces/update")
     const hasLevelFilterUI = computed(() => !props.embed || props.showFilters)
+    const hasNotEqualsLevelFilter = computed(() =>
+        Object.prototype.hasOwnProperty.call(route.query, "filters[level][NOT_EQUALS]"),
+    )
+    const shouldUseMinLevel = computed(() =>
+        !props.filters && hasLevelFilterUI.value && !hasNotEqualsLevelFilter.value,
+    )
     const defaultLogLevel = computed(() =>
         typeof window !== "undefined"
             ? localStorage.getItem("defaultLogLevel") || "INFO"
@@ -134,7 +140,7 @@
         effectiveValue: effectiveLogLevel,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
     } = useRouteFilterPolicy<string>({
-        enabled: () => !props.filters && hasLevelFilterUI.value,
+        enabled: () => shouldUseMinLevel.value,
         explicitValue: () => props.logLevel,
         defaultValue: () => defaultLogLevel.value,
         applyDefaultIfMissing: () => true,
@@ -211,8 +217,8 @@
             queryFilter["filters[namespace][EQUALS]"] = routeNamespace.value
         }
 
-        // Level filter is a minimum threshold. Always normalize to a single EQUALS query.
-        if (!props.filters) {
+        // Level filter is a minimum threshold. Normalize only when using min-level semantics.
+        if (shouldUseMinLevel.value) {
             queryFilter = normalizeRouteLevelFilter(queryFilter, effectiveLogLevel.value)
         }
 
@@ -233,7 +239,7 @@
         await logsStore.findLogs(loadQuery({
             page,
             size,
-            minLevel: props.filters ? null : effectiveLogLevel.value,
+            minLevel: shouldUseMinLevel.value ? effectiveLogLevel.value : null,
             sort: "timestamp:desc",
         }))
             .finally(() => {

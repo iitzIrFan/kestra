@@ -3,13 +3,13 @@ import type {
     LocationQueryRaw,
     LocationQueryValue,
     LocationQueryValueRaw,
-} from "vue-router";
-import type {AppliedFilter} from "./filterTypes";
+} from "vue-router"
+import type {AppliedFilter} from "./filterTypes"
 
-const LEVEL_FILTER_PREFIX = "filters[level][";
-const LEVEL_EQUALS_FILTER_KEY = "filters[level][EQUALS]";
-const LEVEL_AT_OR_BELOW_FILTER_KEY = "filters[level][AT_OR_BELOW]";
-const LEGACY_LEVEL_FILTER_KEY = "level";
+const LEVEL_FILTER_PREFIX = "filters[level]["
+const LEVEL_EQUALS_FILTER_KEY = "filters[level][EQUALS]"
+const LEVEL_GREATER_THAN_OR_EQUAL_TO_FILTER_KEY = "filters[level][GREATER_THAN_OR_EQUAL_TO]"
+const LEGACY_LEVEL_FILTER_KEY = "level"
 
 const firstStringValue = (
     value:
@@ -27,7 +27,7 @@ const firstStringValue = (
 
 export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw) => {
     const value =
-        firstStringValue(query[LEVEL_AT_OR_BELOW_FILTER_KEY]) ??
+        firstStringValue(query[LEVEL_GREATER_THAN_OR_EQUAL_TO_FILTER_KEY]) ??
         firstStringValue(query[LEVEL_EQUALS_FILTER_KEY]) ??
         firstStringValue(query[LEGACY_LEVEL_FILTER_KEY])
 
@@ -36,12 +36,12 @@ export const readRouteLevelFilter = (query: LocationQuery | LocationQueryRaw) =>
 
 export const hasUnsupportedRouteLevelComparator = (query: LocationQuery | LocationQueryRaw) =>
     Object.keys(query).some(
-        (key) =>
+            (key) =>
             key === LEGACY_LEVEL_FILTER_KEY ||
             (key.startsWith(LEVEL_FILTER_PREFIX) &&
                 key !== LEVEL_EQUALS_FILTER_KEY &&
-                key !== LEVEL_AT_OR_BELOW_FILTER_KEY),
-    );
+                key !== LEVEL_GREATER_THAN_OR_EQUAL_TO_FILTER_KEY),
+    )
 
 export const readAppliedLevelFilter = (filters: AppliedFilter[]) => {
     const levelFilter = filters.find((filter) => filter.key === "level")
@@ -72,7 +72,7 @@ export const normalizeRouteLevelFilter = (
     })
 
     if (level) {
-        normalized[LEVEL_AT_OR_BELOW_FILTER_KEY] = level;
+        normalized[LEVEL_GREATER_THAN_OR_EQUAL_TO_FILTER_KEY] = level
     }
 
     delete normalized[LEGACY_LEVEL_FILTER_KEY]

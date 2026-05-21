@@ -7,7 +7,10 @@ import java.util.List;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.GreaterThanOrEqualTo;
+import io.kestra.core.models.dashboards.filters.In;
 import io.kestra.core.models.dashboards.filters.LessThanOrEqualTo;
+import io.kestra.core.models.executions.LogEntry;
+import org.slf4j.event.Level;
 
 public interface ILogs extends IData<ILogs.Fields> {
 
@@ -31,6 +34,21 @@ public interface ILogs extends IData<ILogs.Fields> {
                 flowFilters.forEach(f ->
                 {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
+                });
+            }
+
+            List<QueryFilter> minLevelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.MIN_LEVEL)).toList();
+            if (!minLevelFilters.isEmpty()) {
+                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.LEVEL));
+                minLevelFilters.forEach(f -> {
+                    Object v = f.value();
+                    try {
+                        Level level = v instanceof Level ? (Level) v : Level.valueOf(v.toString().toUpperCase());
+                        List<Object> names = LogEntry.findLevelsAtOrAbove(level).stream().map(Enum::name).map(Object.class::cast).toList();
+                        updatedWhere.add(In.<Fields>builder().field(Fields.LEVEL).values(names).build());
+                    } catch (Exception e) {
+                        updatedWhere.add(f.toDashboardFilterBuilder(Fields.LEVEL, f.value()));
+                    }
                 });
             }
         }

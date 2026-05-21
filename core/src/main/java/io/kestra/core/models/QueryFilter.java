@@ -13,9 +13,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.dashboards.filters.*;
-import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.utils.Enums;
-import org.slf4j.event.Level;
 
 import lombok.Builder;
 
@@ -37,7 +35,6 @@ public record QueryFilter(
 
     public enum Op {
         EQUALS,
-        AT_OR_BELOW,
         NOT_EQUALS,
         GREATER_THAN,
         LESS_THAN,
@@ -64,26 +61,12 @@ public record QueryFilter(
     public <T extends Enum<T>> AbstractFilter<T> toDashboardFilterBuilder(T field, Object value) {
         return switch (this.operation) {
             case EQUALS -> EqualTo.<T>builder().field(field).value(value).build();
-            case AT_OR_BELOW -> {
-                if (field.name().equalsIgnoreCase("LEVEL") && value instanceof String valueStr) {
-                    try {
-                        Level level = Level.valueOf(valueStr.toUpperCase());
-                        yield In.<T>builder()
-                                .field(field)
-                                .values(LogEntry.findLevelsAtOrBelow(level).stream().map(Enum::name)
-                                        .map(Object.class::cast).toList())
-                                .build();
-                    } catch (IllegalArgumentException e) {
-                        yield EqualTo.<T>builder().field(field).value(value).build();
-                    }
-                }
-                yield EqualTo.<T>builder().field(field).value(value).build();
-            }
+            case LESS_THAN_OR_EQUAL_TO -> LessThanOrEqualTo.<T>builder().field(field).value(value).build();
             case NOT_EQUALS -> NotEqualTo.<T>builder().field(field).value(value).build();
             case GREATER_THAN -> GreaterThan.<T>builder().field(field).value(value).build();
             case LESS_THAN -> LessThan.<T>builder().field(field).value(value).build();
             case GREATER_THAN_OR_EQUAL_TO -> GreaterThanOrEqualTo.<T>builder().field(field).value(value).build();
-            case LESS_THAN_OR_EQUAL_TO -> LessThanOrEqualTo.<T>builder().field(field).value(value).build();
+            // handled above (special-cased for LEVEL)
             case IN -> In.<T>builder().field(field).values(asValues(value)).build();
             case NOT_IN -> NotIn.<T>builder().field(field).values(asValues(value)).build();
             case STARTS_WITH -> StartsWith.<T>builder().field(field).value(value.toString()).build();
@@ -319,7 +302,7 @@ public record QueryFilter(
         MIN_LEVEL("level") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.AT_OR_BELOW, Op.NOT_EQUALS);
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.NOT_EQUALS);
             }
         },
         PATH("path") {

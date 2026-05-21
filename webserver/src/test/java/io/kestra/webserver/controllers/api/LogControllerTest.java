@@ -86,7 +86,7 @@ class LogControllerTest {
         assertThat(logs.getTotal()).isEqualTo(2L);
 
         logs = client.toBlocking().retrieve(
-            GET("/api/v1/" + tenant + "/logs/search?filters[level][AT_OR_BELOW]=INFO"),
+            GET("/api/v1/" + tenant + "/logs/search?filters[level][LESS_THAN_OR_EQUAL_TO]=INFO"),
             Argument.of(PagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(2L);

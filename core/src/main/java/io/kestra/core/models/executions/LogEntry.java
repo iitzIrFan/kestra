@@ -64,11 +64,13 @@ public class LogEntry implements TenantInterface, DispatchEvent {
     @Nullable
     ExecutionKind executionKind;
 
-    public static List<Level> findLevelsByMin(Level minLevel) {
-        return findLevelsAtOrBelow(minLevel);
-    }
-
-    public static List<Level> findLevelsAtOrBelow(Level minLevel) {
+    /**
+     * Return the provided level and all higher severity levels (i.e. "at or above").
+     * This matches the previous behaviour used across the codebase where a "min"
+     * level represents the lowest severity to include, and higher severities
+     * (WARN, ERROR) are considered "greater".
+     */
+    public static List<Level> findLevelsAtOrAbove(Level minLevel) {
         if (minLevel == null) {
             return Arrays.stream(Level.values())
                 .sorted(Comparator.comparingInt(Level::toInt))
@@ -79,6 +81,19 @@ public class LogEntry implements TenantInterface, DispatchEvent {
             .filter(level -> level.toInt() >= minLevel.toInt())
             .sorted(Comparator.comparingInt(Level::toInt))
             .toList();
+    }
+
+    /**
+     * Backwards-compatible alias kept for callers expecting the old name.
+     * Prefer {@link #findLevelsAtOrAbove(Level)} for clarity.
+     */
+    @Deprecated
+    public static List<Level> findLevelsAtOrBelow(Level minLevel) {
+        return findLevelsAtOrAbove(minLevel);
+    }
+
+    public static List<Level> findLevelsByMin(Level minLevel) {
+        return findLevelsAtOrAbove(minLevel);
     }
 
     public static LogEntry of(Execution execution) {

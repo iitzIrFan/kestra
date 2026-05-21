@@ -34,6 +34,7 @@
         COMPARATOR_DESCRIPTIONS,
         COMPARATOR_LABELS,
         Comparators,
+        type FilterKeyConfig,
     } from "../utils/filterTypes"
 
     const {t} = useI18n()
@@ -41,7 +42,7 @@
     const props = defineProps<{
         shouldShowComparator: boolean;
         selectedComparator: Comparators;
-        filterKey: {comparators: Comparators[]};
+        filterKey: FilterKeyConfig;
     }>()
 
     const emits = defineEmits<{
@@ -53,7 +54,8 @@
         set: (value: Comparators) => emits("update:selectedComparator", value),
     })
 
-    const getLabel = (comparator: Comparators) => COMPARATOR_LABELS[comparator]
+    const getLabel = (comparator: Comparators) =>
+        props.filterKey?.comparatorLabels?.[comparator] ?? COMPARATOR_LABELS[comparator]
     const getDescription = (comparator: Comparators) => t(COMPARATOR_DESCRIPTIONS[comparator])
 </script>
 
