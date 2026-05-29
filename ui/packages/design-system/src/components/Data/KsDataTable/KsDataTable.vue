@@ -41,6 +41,8 @@
                         fixed
                         :data
                         :rowKey
+                        :expandRowKeys="composedExpandRowKeys"
+                        :rowClassName="composedRowClassName"
                         :emptyText="data && data.length === 0 ? noDataText : ''"
                         @selection-change="selectionChanged"
                         @select="onSelect"
@@ -55,8 +57,8 @@
 
             <KsPagination
                 v-if="total && total > 0"
-                :currentPage="internalPage"
-                :pageSize="internalSize"
+                :currentPage="currentPageValue"
+                :pageSize="currentSizeValue"
                 :total
                 layout="sizes, prev, pager, next, total"
                 size="small"
@@ -70,7 +72,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
+    import {ref, computed, useAttrs, useSlots, onMounted, onUnmounted, onUpdated, nextTick, watch} from "vue"
 
     import {vKsLoading} from "../../Feedback/KsLoading"
     import KsTable from "../KsTable/KsTable.vue"
@@ -79,6 +81,10 @@
     import KsBulkSelect from "./KsBulkSelect.vue"
 
     defineOptions({inheritAttrs: false})
+
+    const DEFAULT_PAGE_SIZE = 25
+    const MAX_PAGE_SIZE = 1000
+    const MAX_PAGE = 1_000_000
 
     const props = withDefaults(defineProps<{
         data?: any[]
@@ -93,6 +99,7 @@
         pageSizeOptions?: number[]
         loadData?: (params: {page: number; size: number; sort?: string}) => void | Promise<void>
         selectionMapper?: (element: any) => any
+        forceExpandedRowKeys?: string[]
     }>(), {
         data: () => [],
         total: 0,
@@ -106,10 +113,13 @@
         pageSizeOptions: () => [10, 25, 50, 100],
         loadData: undefined,
         selectionMapper: undefined,
+        forceExpandedRowKeys: () => [],
     })
 
     const emit = defineEmits<{
         "page-changed": [payload: {page: number; size: number}]
+        "update:currentPage": [page: number]
+        "update:pageSize": [size: number]
         "sort-change": [sort: {column: any; prop: string; order: string | null}]
         "selection-change": [selection: any[]]
         "row-dblclick": [row: any, column: any, event: Event]
@@ -127,16 +137,50 @@
     }>()
 
     const slots = useSlots()
+    const attrs = useAttrs()
     const hasNavBar = computed(() => !!slots["navbar"])
     const hasTableSlot = computed(() => !!slots["table"])
     const hasBulkActions = computed(() => !!slots["bulk-actions"])
     const hasEmpty = computed(() => !!slots["empty"])
 
+    const composedExpandRowKeys = computed<string[] | undefined>(() => {
+        const forced = props.forceExpandedRowKeys ?? []
+        const userKeys = (attrs.expandRowKeys as string[] | undefined) ?? []
+        if (!forced.length && !userKeys.length) return undefined
+        return Array.from(new Set([...userKeys, ...forced]))
+    })
+
+    const composedRowClassName = computed(() => {
+        const forced = new Set(props.forceExpandedRowKeys ?? [])
+        const userClass = attrs.rowClassName as ((arg: any) => string) | string | undefined
+
+        if (!forced.size && !userClass) return undefined
+
+        return (arg: {row: any}) => {
+            const base = typeof userClass === "function" ? userClass(arg) : (userClass ?? "")
+            if (!forced.size) return base
+            const key = typeof props.rowKey === "function"
+                ? (props.rowKey as (row: any) => string)(arg.row)
+                : (arg.row as any)?.[props.rowKey as string]
+            return [base, forced.has(String(key)) ? "ks-row-force-expanded" : ""].filter(Boolean).join(" ")
+        }
+    })
+
     const isLoading = ref(props.loading)
     const isReady = ref(false)
 
-    const internalPage = ref(props.currentPage)
-    const internalSize = ref(props.pageSize)
+    const normalizePage = (value: number | undefined): number => {
+        const page = Math.floor(Number(value))
+        if (!Number.isFinite(page) || page < 1) return 1
+        return Math.min(page, MAX_PAGE)
+    }
+    const normalizeSize = (value: number | undefined): number => {
+        const size = Math.floor(Number(value))
+        if (!Number.isFinite(size) || size < 1) return DEFAULT_PAGE_SIZE
+        return Math.min(size, MAX_PAGE_SIZE)
+    }
+    const currentPageValue = computed(() => normalizePage(props.currentPage))
+    const currentSizeValue = computed(() => normalizeSize(props.pageSize))
     const internalSort = ref<string>()
 
     const tableRef = ref<InstanceType<typeof KsTable>>()
@@ -243,8 +287,8 @@
         isLoading.value = true
         try {
             await props.loadData({
-                page: internalPage.value,
-                size: internalSize.value,
+                page: currentPageValue.value,
+                size: currentSizeValue.value,
                 sort: internalSort.value,
             })
         } finally {
@@ -261,8 +305,12 @@
     const reload = () => callLoad()
 
     const resetAndReload = () => {
-        internalPage.value = 1
-        callLoad()
+        if (currentPageValue.value !== 1) {
+            emit("update:currentPage", 1)
+            emit("page-changed", {page: 1, size: currentSizeValue.value})
+        } else {
+            callLoad()
+        }
     }
 
     onMounted(() => {
@@ -297,20 +345,18 @@
     }, {immediate: true})
 
     watch(() => props.loading, (val) => { isLoading.value = val })
-    watch(() => props.currentPage, (val) => { internalPage.value = val ?? 1 })
-    watch(() => props.pageSize, (val) => { internalSize.value = val ?? 25 })
+
+    watch([currentPageValue, currentSizeValue], () => callLoad(), {flush: "post"})
 
     const onPageChange = (page: number) => {
-        internalPage.value = page
-        emit("page-changed", {page, size: internalSize.value})
-        callLoad()
+        emit("update:currentPage", page)
+        emit("page-changed", {page, size: currentSizeValue.value})
     }
 
     const onSizeChange = (size: number) => {
-        internalPage.value = 1
-        internalSize.value = size
+        emit("update:currentPage", 1)
+        emit("update:pageSize", size)
         emit("page-changed", {page: 1, size})
-        callLoad()
     }
 
     const onSortChange = (sort: {column: any; prop: string; order: string | null}) => {
@@ -393,5 +439,9 @@
             }
         }
 
+        .kel-table tr.ks-row-force-expanded .kel-table__expand-icon {
+            visibility: hidden;
+            pointer-events: none;
+        }
     }
 </style>
