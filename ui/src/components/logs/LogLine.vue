@@ -14,8 +14,8 @@
                 class="header"
                 :class="{'d-inline-block': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
             >
-                <span :style="levelStyle" class="el-tag log-level">{{ log.level }}</span>
-                <span class="header-badge text-secondary">
+                <span :style="levelStyle" class="log-level">{{ levelLabel }}</span>
+                <span class="header-badge">
                     {{ Filters.date(log.timestamp, "iso") }}
                 </span>
                 <span v-for="(meta, x) in metaWithValue" :key="x">
@@ -115,12 +115,16 @@
         return result
     })
 
+    const levelLabel = computed(() => {
+        const level = props.log?.level ?? ""
+        return level.charAt(0).toUpperCase() + level.slice(1).toLowerCase()
+    })
+
     const levelStyle = computed(() => {
         const lowerCaseLevel = props.log?.level?.toLowerCase()
         return {
-            "border-color": `var(--ks-log-border-${lowerCaseLevel})`,
             "color": `var(--ks-log-${lowerCaseLevel})`,
-            "background-color": `var(--ks-log-background-${lowerCaseLevel})`,
+            "background-color": `color-mix(in srgb, var(--ks-log-${lowerCaseLevel}) 10%, var(--ks-bg-badge))`,
         }
     })
 
@@ -188,10 +192,18 @@ div.line {
     }
 
     .log-level {
-        padding: .25rem;
-        margin-top: 0;
         display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        gap: var(--ks-spacing-1);
+        white-space: nowrap;
         vertical-align: middle;
+        user-select: none;
+        font-family: var(--ks-font-family-sans);
+        font-weight: 500;
+        border-radius: 0.375rem;
+        padding: 0.125rem var(--ks-spacing-2);
+        font-size: var(--ks-font-size-sm);
     }
 
     .log-content {
@@ -216,6 +228,9 @@ div.line {
             margin: 0;
             padding: 0;
             font-size: inherit;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+            word-break: break-word;
         }
     }
 
@@ -230,6 +245,7 @@ div.line {
         vertical-align: baseline;
         width: auto;
         min-width: 40px;
+        color: var(--ks-text-secondary);
 
         span:first-child {
             margin-right: 6px;
@@ -244,10 +260,16 @@ div.line {
         & a {
             border-radius: var(--kel-border-radius-base);
         }
+    }
 
-        &.log-level {
-            white-space: pre;
-            border-radius: 4px;
+     .property {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+
+        .kel-tag {
+            font-family: var(--kbs-body-font-family);
+            user-select: none;
         }
     }
 
@@ -260,12 +282,6 @@ div.line {
     p, :deep(.log-content p) {
         display: inline;
         margin-bottom: 0;
-    }
-
-    .log-level {
-        padding: 0.25rem;
-        border: 1px solid var(--ks-border-default);
-        user-select: none;
     }
 
     :deep(.clipboard) {

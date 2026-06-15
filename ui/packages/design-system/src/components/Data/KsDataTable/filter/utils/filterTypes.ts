@@ -26,6 +26,16 @@ export interface DateFilterOption {
     label: string;
 }
 
+/**
+ * Extra metadata attached to an applied filter. Currently only carries the value selected from
+ * {@link FilterKeyConfig.dateFilterOptions} for timeRange-like filters that target different date
+ * fields (e.g. "Last triggered" vs "Next execution"). Add new optional keys here as more
+ * meta-driven filters appear.
+ */
+export interface FilterMeta {
+    dateFilter?: string;
+}
+
 export interface FilterKeyConfig {
     key: string;
     label: string;
@@ -40,14 +50,24 @@ export interface FilterKeyConfig {
      * of filtering the loaded list client-side. Server-side support is detected
      * via `valueProvider.length > 0`, so avoid default-valued or rest params.
      */
-    valueProvider?: (options?: {search?: string}) => Promise<FilterValue[]>;
-    valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio";
+    valueProvider?: (options?: {search?: string, meta?: FilterMeta}) => Promise<FilterValue[]>;
+    valueType: "text" | "select" | "date" | "multi-select" | "key-value" | "radio" | "time-range";
+    /**
+     * Only meaningful for {@link valueType} === "time-range". Controls the custom (non-predefined)
+     * mode of the time-range picker on an arbitrary date field:
+     *   - "single" — pick one absolute date (encoded as one comparator on the field key).
+     *   - "range"  — pick a start/end range (encoded as GREATER_THAN_OR_EQUAL_TO + LESS_THAN_OR_EQUAL_TO
+     *                on the field key, and decoded back into a single range chip).
+     * Defaults to "single" when omitted. Note: a time-range field must NOT be keyed "startDate" or
+     * "endDate" — those names are reserved for the dedicated `timeRange` filter encoding.
+     */
+    customDateMode?: "single" | "range";
     visibleByDefault?: boolean;
     defaultValue?: AppliedFilter["value"] | (() => AppliedFilter["value"]);
     /** When set, renders an "Apply to" segmented selector inside the timeRange popover. */
     dateFilterOptions?: DateFilterOption[];
     /** Overrides the chip's keyLabel based on the active dateFilter meta value. */
-    keyLabelProvider?: (meta?: Record<string, string>) => string;
+    keyLabelProvider?: (meta?: FilterMeta) => string;
     /**
      * Per-field override for comparator labels. When provided, supersedes
      * the global COMPARATOR_LABELS for this filter only. Useful when the
@@ -73,8 +93,8 @@ export interface AppliedFilter {
     comparator: Comparators;
     comparatorLabel: string;
     value: string | string[] | Date | {startDate: Date; endDate: Date};
-    /** Extra key-value metadata (e.g. dateFilter for timeRange filters). */
-    meta?: Record<string, string>;
+    /** Extra metadata (e.g. dateFilter for timeRange filters). See {@link FilterMeta}. */
+    meta?: FilterMeta;
 }
 
 export type LogicalOperator = "AND" | "OR";

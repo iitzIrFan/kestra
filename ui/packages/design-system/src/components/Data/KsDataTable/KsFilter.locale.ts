@@ -38,6 +38,7 @@ export default {
             "reset_tooltip": "Reset to default",
             "or": "OR",
             "and": "AND",
+            "in any": "in any",
             "add_condition_group": "+ Add condition group",
             "add_condition_group_tooltip": "Add another condition group",
             "remove_condition_group": "Remove this condition group",
@@ -65,6 +66,7 @@ export default {
             "no options found": "No options found",
             "show default": "Show Default",
             "operator": "Filter operator",
+            "is_between": "Is Between",
             "timerange": {
                 "predefined": "Predefined",
                 "custom": "Custom Range",
@@ -194,7 +196,16 @@ export default {
             },
             "timeRange_trigger": {
                 "label": "Interval",
-                "description": "Filter by last triggered timestamp",
+                "description": "Filter by trigger time",
+                "applyTo": "Apply to",
+                "chip": {
+                    "nextExecution": "Next execution",
+                    "lastTriggered": "Last triggered",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "Next execution date",
+                    "lastTriggeredDate": "Last triggered date",
+                },
             },
             "timeRange_metric": {
                 "label": "Interval",
@@ -388,6 +399,7 @@ export default {
                 "label": "Aggregation",
             },
             "and": "UND",
+            "in any": "in beliebigen",
             "apply": "Filter anwenden",
             "apply filter": "Filter anwenden",
             "cancel": "Abbrechen",
@@ -514,6 +526,7 @@ export default {
             },
             "no options found": "Keine Optionen gefunden",
             "operator": "Filter-Operator",
+            "is_between": "Liegt zwischen",
             "options": "Datenoptionen",
             "or": "ODER",
             "periodic refresh": "Periodische Aktualisierung",
@@ -674,8 +687,17 @@ export default {
                 "label": "Intervall",
             },
             "timeRange_trigger": {
-                "description": "Nach letztem Trigger-Zeitstempel filtern",
+                "description": "Nach Trigger-Zeit filtern",
                 "label": "Intervall",
+                "applyTo": "Anwenden auf",
+                "chip": {
+                    "nextExecution": "Nächste Ausführung",
+                    "lastTriggered": "Zuletzt ausgelöst",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "Nächstes Ausführungsdatum",
+                    "lastTriggeredDate": "Letztes Auslösedatum",
+                },
             },
             "timerange": {
                 "custom": "Benutzerdefinierter Bereich",
@@ -748,6 +770,7 @@ export default {
                 "label": "Agregación",
             },
             "and": "Y",
+            "in any": "en cualquiera",
             "apply": "Aplicar filtros",
             "apply filter": "Aplicar filtro",
             "cancel": "Cancelar",
@@ -874,6 +897,7 @@ export default {
             },
             "no options found": "No se encontraron opciones",
             "operator": "Operador de filtro",
+            "is_between": "Está entre",
             "options": "Opciones de Datos",
             "or": "O",
             "periodic refresh": "Actualización periódica",
@@ -1034,8 +1058,17 @@ export default {
                 "label": "Intervalo",
             },
             "timeRange_trigger": {
-                "description": "Filtrar por la última marca de tiempo activada",
+                "description": "Filtrar por tiempo de trigger",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
+                "chip": {
+                    "nextExecution": "Próxima ejecución",
+                    "lastTriggered": "Última activación",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "Fecha de próxima ejecución",
+                    "lastTriggeredDate": "Fecha de última activación",
+                },
             },
             "timerange": {
                 "custom": "Rango Personalizado",
@@ -1108,6 +1141,7 @@ export default {
                 "label": "Agrégation",
             },
             "and": "ET",
+            "in any": "dans tout",
             "apply": "Appliquer des filtres",
             "apply filter": "Appliquer le filtre",
             "cancel": "Annuler",
@@ -1234,6 +1268,7 @@ export default {
             },
             "no options found": "Aucune option trouvée",
             "operator": "Opérateur de filtre",
+            "is_between": "Est entre",
             "options": "Options de Données",
             "or": "OU",
             "periodic refresh": "Rafraîchissement périodique",
@@ -1394,8 +1429,17 @@ export default {
                 "label": "Intervalle",
             },
             "timeRange_trigger": {
-                "description": "Filtrer par dernier timestamp déclenché",
+                "description": "Filtrer par temps de déclenchement",
                 "label": "Intervalle",
+                "applyTo": "Appliquer à",
+                "chip": {
+                    "nextExecution": "Prochaine exécution",
+                    "lastTriggered": "Dernier déclenchement",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "Date de prochaine exécution",
+                    "lastTriggeredDate": "Date du dernier déclenchement",
+                },
             },
             "timerange": {
                 "custom": "Plage personnalisée",
@@ -1468,6 +1512,7 @@ export default {
                 "label": "एग्रीगेशन",
             },
             "and": "और",
+            "in any": "किसी में भी",
             "apply": "फ़िल्टर लागू करें",
             "apply filter": "फ़िल्टर लागू करें",
             "cancel": "रद्द करें",
@@ -1594,6 +1639,7 @@ export default {
             },
             "no options found": "कोई विकल्प नहीं मिला",
             "operator": "फ़िल्टर ऑपरेटर",
+            "is_between": "के बीच है",
             "options": "डेटा विकल्प",
             "or": "या",
             "periodic refresh": "आवधिक रिफ्रेश",
@@ -1754,8 +1800,17 @@ export default {
                 "label": "अंतराल",
             },
             "timeRange_trigger": {
-                "description": "अंतिम ट्रिगर किए गए टाइमस्टैम्प द्वारा फ़िल्टर करें",
+                "description": "ट्रिगर समय द्वारा फ़िल्टर करें",
                 "label": "अंतराल",
+                "applyTo": "लागू करें",
+                "chip": {
+                    "nextExecution": "अगला निष्पादन",
+                    "lastTriggered": "अंतिम ट्रिगर",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "अगली निष्पादन तिथि",
+                    "lastTriggeredDate": "अंतिम ट्रिगर तिथि",
+                },
             },
             "timerange": {
                 "custom": "कस्टम रेंज",
@@ -1828,6 +1883,7 @@ export default {
                 "label": "Aggregazione",
             },
             "and": "E",
+            "in any": "in qualsiasi",
             "apply": "Applica filtri",
             "apply filter": "Applica filtro",
             "cancel": "Annulla",
@@ -1954,6 +2010,7 @@ export default {
             },
             "no options found": "Nessuna opzione trovata",
             "operator": "Operatore di filtro",
+            "is_between": "È compreso tra",
             "options": "Opzioni Dati",
             "or": "O",
             "periodic refresh": "Aggiornamento periodico",
@@ -2114,8 +2171,17 @@ export default {
                 "label": "Intervallo",
             },
             "timeRange_trigger": {
-                "description": "Filtra per timestamp dell'ultimo trigger",
+                "description": "Filtra per tempo del trigger",
                 "label": "Intervallo",
+                "applyTo": "Applica a",
+                "chip": {
+                    "nextExecution": "Prossima esecuzione",
+                    "lastTriggered": "Ultimo trigger",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "Data della prossima esecuzione",
+                    "lastTriggeredDate": "Data dell'ultimo trigger",
+                },
             },
             "timerange": {
                 "custom": "Intervallo personalizzato",
@@ -2188,6 +2254,7 @@ export default {
                 "label": "集計",
             },
             "and": "AND",
+            "in any": "すべて",
             "apply": "フィルターを適用",
             "apply filter": "フィルターを適用",
             "cancel": "キャンセル",
@@ -2314,6 +2381,7 @@ export default {
             },
             "no options found": "オプションが見つかりません",
             "operator": "フィルター演算子",
+            "is_between": "範囲内",
             "options": "データオプション",
             "or": "OR",
             "periodic refresh": "定期更新",
@@ -2474,8 +2542,17 @@ export default {
                 "label": "インターバル",
             },
             "timeRange_trigger": {
-                "description": "最終トリガーのタイムスタンプでフィルター",
+                "description": "トリガー時刻でフィルター",
                 "label": "インターバル",
+                "applyTo": "適用先",
+                "chip": {
+                    "nextExecution": "次回実行",
+                    "lastTriggered": "最終トリガー",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "次回実行日",
+                    "lastTriggeredDate": "最終トリガー日",
+                },
             },
             "timerange": {
                 "custom": "カスタム範囲",
@@ -2548,6 +2625,7 @@ export default {
                 "label": "집계",
             },
             "and": "AND",
+            "in any": "모두",
             "apply": "필터 적용",
             "apply filter": "필터 적용",
             "cancel": "취소",
@@ -2674,6 +2752,7 @@ export default {
             },
             "no options found": "옵션을 찾을 수 없습니다.",
             "operator": "필터 연산자",
+            "is_between": "사이",
             "options": "데이터 옵션",
             "or": "OR",
             "periodic refresh": "주기적 새로 고침",
@@ -2834,8 +2913,17 @@ export default {
                 "label": "간격",
             },
             "timeRange_trigger": {
-                "description": "마지막 trigger된 타임스탬프로 필터링",
+                "description": "트리거 시간으로 필터링",
                 "label": "간격",
+                "applyTo": "적용 대상",
+                "chip": {
+                    "nextExecution": "다음 실행",
+                    "lastTriggered": "마지막 트리거",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "다음 실행 날짜",
+                    "lastTriggeredDate": "마지막 트리거 날짜",
+                },
             },
             "timerange": {
                 "custom": "사용자 정의 범위",
@@ -2908,6 +2996,7 @@ export default {
                 "label": "Agregacja",
             },
             "and": "ORAZ",
+            "in any": "w dowolnym",
             "apply": "Zastosuj filtry",
             "apply filter": "Zastosuj filtr",
             "cancel": "Anuluj",
@@ -3034,6 +3123,7 @@ export default {
             },
             "no options found": "Nie znaleziono opcji",
             "operator": "Operator filtrowania",
+            "is_between": "Pomiędzy",
             "options": "Opcje Danych",
             "or": "LUB",
             "periodic refresh": "Okresowe odświeżanie",
@@ -3194,8 +3284,17 @@ export default {
                 "label": "Interwał",
             },
             "timeRange_trigger": {
-                "description": "Filtruj według ostatniego uruchomienia znacznika czasu",
+                "description": "Filtruj według czasu wyzwalania",
                 "label": "Interwał",
+                "applyTo": "Zastosuj do",
+                "chip": {
+                    "nextExecution": "Następne wykonanie",
+                    "lastTriggered": "Ostatnie uruchomienie",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "Data następnego wykonania",
+                    "lastTriggeredDate": "Data ostatniego uruchomienia",
+                },
             },
             "timerange": {
                 "custom": "Zakres niestandardowy",
@@ -3268,6 +3367,7 @@ export default {
                 "label": "Agregação",
             },
             "and": "E",
+            "in any": "em qualquer",
             "apply": "Aplicar filtros",
             "apply filter": "Aplicar filtro",
             "cancel": "Cancelar",
@@ -3394,6 +3494,7 @@ export default {
             },
             "no options found": "Nenhuma opção encontrada",
             "operator": "Operador de filtro",
+            "is_between": "Está entre",
             "options": "Opções de Dados",
             "or": "OU",
             "periodic refresh": "Atualização periódica",
@@ -3554,8 +3655,17 @@ export default {
                 "label": "Intervalo",
             },
             "timeRange_trigger": {
-                "description": "Filtrar por timestamp do último trigger",
+                "description": "Filtrar por tempo do trigger",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
+                "chip": {
+                    "nextExecution": "Próxima execução",
+                    "lastTriggered": "Último trigger",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "Data da próxima execução",
+                    "lastTriggeredDate": "Data do último trigger",
+                },
             },
             "timerange": {
                 "custom": "Intervalo Personalizado",
@@ -3628,6 +3738,7 @@ export default {
                 "label": "Agrupamento",
             },
             "and": "E",
+            "in any": "em qualquer",
             "apply": "Aplicar filtros",
             "apply filter": "Aplicar filtro",
             "cancel": "Cancelar",
@@ -3754,6 +3865,7 @@ export default {
             },
             "no options found": "Nenhuma opção encontrada",
             "operator": "Operador de filtro",
+            "is_between": "Está entre",
             "options": "Opções de Dados",
             "or": "OU",
             "periodic refresh": "Atualização periódica",
@@ -3914,8 +4026,17 @@ export default {
                 "label": "Intervalo",
             },
             "timeRange_trigger": {
-                "description": "Filtrar por timestamp do último trigger",
+                "description": "Filtrar por tempo do trigger",
                 "label": "Intervalo",
+                "applyTo": "Aplicar a",
+                "chip": {
+                    "nextExecution": "Próxima execução",
+                    "lastTriggered": "Último trigger",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "Data da próxima execução",
+                    "lastTriggeredDate": "Data do último trigger",
+                },
             },
             "timerange": {
                 "custom": "Intervalo Personalizado",
@@ -3988,6 +4109,7 @@ export default {
                 "label": "Агрегация",
             },
             "and": "И",
+            "in any": "в любом",
             "apply": "Применить фильтры",
             "apply filter": "Применить фильтр",
             "cancel": "Отменить",
@@ -4114,6 +4236,7 @@ export default {
             },
             "no options found": "Опции не найдены",
             "operator": "Оператор фильтра",
+            "is_between": "Между",
             "options": "Параметры данных",
             "or": "ИЛИ",
             "periodic refresh": "Периодическое обновление",
@@ -4274,8 +4397,17 @@ export default {
                 "label": "Интервал",
             },
             "timeRange_trigger": {
-                "description": "Фильтр по последней метке времени срабатывания",
+                "description": "Фильтр по времени триггера",
                 "label": "Интервал",
+                "applyTo": "Применить к",
+                "chip": {
+                    "nextExecution": "Следующее выполнение",
+                    "lastTriggered": "Последнее срабатывание",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "Дата следующего выполнения",
+                    "lastTriggeredDate": "Дата последнего срабатывания",
+                },
             },
             "timerange": {
                 "custom": "Пользовательский диапазон",
@@ -4348,6 +4480,7 @@ export default {
                 "label": "聚合",
             },
             "and": "且",
+            "in any": "任意",
             "apply": "应用过滤器",
             "apply filter": "应用过滤器",
             "cancel": "取消",
@@ -4474,6 +4607,7 @@ export default {
             },
             "no options found": "未找到选项",
             "operator": "过滤运算符",
+            "is_between": "介于",
             "options": "数据选项",
             "or": "或",
             "periodic refresh": "定期刷新",
@@ -4634,8 +4768,17 @@ export default {
                 "label": "间隔",
             },
             "timeRange_trigger": {
-                "description": "按最后触发的时间戳筛选",
+                "description": "按触发器时间筛选",
                 "label": "间隔",
+                "applyTo": "应用到",
+                "chip": {
+                    "nextExecution": "下次执行",
+                    "lastTriggered": "最后触发",
+                },
+                "dateFilter": {
+                    "nextExecutionDate": "下次执行日期",
+                    "lastTriggeredDate": "最后触发日期",
+                },
             },
             "timerange": {
                 "custom": "自定义范围",

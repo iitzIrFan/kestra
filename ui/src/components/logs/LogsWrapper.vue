@@ -8,6 +8,7 @@
                 :currentPage="urlPage"
                 :pageSize="urlSize"
                 @ready="ready = true"
+                @loaded="onLoaded"
                 @page-changed="onPageChanged"
                 :total="logsStore.total"
             >
@@ -21,6 +22,16 @@
                         }"
                         :defaultScope="false"
                         @filter="onFilterRouteSync"
+                    />
+                    <QuickFilters
+                        :levels="VALUES.LEVELS"
+                        :intervals="quickIntervals"
+                        :level="effectiveLogLevel?.value"
+                        :timeRange="selectedTimeRange"
+                        :intervalLabel="t('filter.timeRange_log.label')"
+                        :levelLabel="t('filter.level_log_executions.label')"
+                        @update:level="(value: string) => setLevelRouteValue({value, direction: 'min'})"
+                        @update:time-range="onQuickFilterTimeRange"
                     />
                 </template>
 
@@ -59,6 +70,8 @@
     import _merge from "lodash/merge"
     import moment from "moment"
     import {useLogFilter} from "../filter/configurations"
+    import {useValues} from "../filter/composables/useValues"
+    import QuickFilters from "../filter/QuickFilters.vue"
     import useRestoreUrl from "../../composables/useRestoreUrl"
     import {KsFilter as KSFilter} from "@kestra-io/design-system"
 
@@ -78,6 +91,7 @@
     import {
         hasUnsupportedRouteLevelComparator,
         normalizeRouteLevelFilter,
+        normalizeRouteTimeRangeFilter,
         readAppliedLevelFilter,
         readRouteLevelFilter,
     } from "@kestra-io/design-system"
@@ -112,6 +126,14 @@
     const {t} = useI18n()
     const logsStore = useLogsStore()
     const logFilter = useLogFilter()
+    const {VALUES} = useValues("logs")
+    const quickIntervals = computed(() => [
+        {label: t("datepicker.short.15m"), value: "PT15M"},
+        {label: t("datepicker.short.1h"), value: "PT1H"},
+        {label: t("datepicker.short.12h"), value: "PT12H"},
+        {label: t("datepicker.short.1d"), value: "PT24H"},
+        {label: t("datepicker.short.7d"), value: "PT168H"},
+    ])
     const dataTable = useTemplateRef("dataTable")
     const ready = ref(false)
 
@@ -136,6 +158,7 @@
     const {
         effectiveValue: effectiveLogLevel,
         syncFromAppliedFilters: syncLevelFromAppliedFilters,
+        setRouteValue: setLevelRouteValue,
     } = useRouteFilterPolicy<LevelFilterValue>({
         enabled: () => !props.filters && hasLevelFilterUI.value,
         explicitValue: () => props.logLevel ? {value: props.logLevel, direction: "min"} : undefined,
@@ -203,6 +226,10 @@
         {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART},
     ])
 
+    const onQuickFilterTimeRange = (value: string) => {
+        router.replace({query: normalizeRouteTimeRangeFilter(route.query, value)})
+    }
+
     const loadQuery = (base: any) => {
         const {page: _p, size: _s, sort: _so, logsPage: _lp, logsSize: _ls, ...routeFilters} = route.query
         let queryFilter = props.filters ?? {...routeFilters}
@@ -256,8 +283,21 @@
     const urlPage = computed(() => Number(route.query[pageKey]) || 1)
     const urlSize = computed(() => Number(route.query[sizeKey]) || 25)
 
+    const pinToBottom = ref(false)
+
     const onPageChanged = ({page, size}: {page: number; size: number}) => {
+        pinToBottom.value = !props.embed
         router.push({query: {...route.query, [pageKey]: String(page), [sizeKey]: String(size)}})
+    }
+
+    const onLoaded = () => {
+        if (!pinToBottom.value) return
+        pinToBottom.value = false
+        const main = document.querySelector("main")
+        if (!main) return
+        requestAnimationFrame(() => {
+            main.scrollTop = main.scrollHeight
+        })
     }
 
     const filterQueryKey = computed(() => {
@@ -313,6 +353,7 @@
             border-radius: var(--kel-border-radius-round);
             overflow: hidden;
             padding: 1rem;
+            margin: 0 var(--ks-spacing-5);
             padding-top: .5rem;
             background-color: var(--ks-bg-surface);
             border: 1px solid var(--ks-border-default);

@@ -59,6 +59,7 @@ micronaut:
     csrf:
       enabled: true
       signature-key: ${kestra.encryption.secret-key:}
+      cookie-name: csrfToken
       filter:
         enabled: false
   caches:
@@ -269,6 +270,12 @@ kestra:
 
   async-operations:
     wait-timeout: PT30S
+
+  tasks:
+    sdk:
+      authentication:
+        username: ${kestra.server.basic-auth.username:}
+        password: ${kestra.server.basic-auth.password:}  
 
 otel:
   exclusions:

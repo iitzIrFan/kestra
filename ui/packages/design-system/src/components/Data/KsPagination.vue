@@ -59,7 +59,6 @@
         --kel-pagination-button-color: var(--ks-text-link);
         --kel-pagination-hover-color: var(--ks-text-link);
 
-        background-color: var(--ks-bg-base);
         gap: 8px;
 
         li, button, .btn-prev, .btn-next {
@@ -73,7 +72,7 @@
         .kel-pagination__sizes {
             .kel-select {
                 width: auto;
-                min-width: 110px;
+                min-width: 130px;
             }
         }
 
