@@ -1,10 +1,5 @@
 {
   "ru": {
-    "loading": "Загрузка...",
-        "back": "Назад",
-        "next": "Далее",
-        "done": "Готово",
-        "review your inputs": "Проверьте введённые данные",
     "Add flow": "Добавить flow",
     "Default log level": "Уровень log по умолчанию",
     "Default namespace": "Namespace по умолчанию",
@@ -83,6 +78,7 @@
     "automatic refresh": "Автоматическое обновление",
     "avg": "Среднее",
     "avg duration": "Средняя длительность выполнения",
+    "back": "Назад",
     "back_to_dashboard": "Вернуться на панель управления",
     "backfill": "Заполнение",
     "backfill executions": "Выполнения заполнение",
@@ -497,6 +493,7 @@
       "github": "Открыть проблему на GitHub"
     },
     "documentationMenu": "Меню документации",
+    "done": "Готово",
     "down trend": "Уменьшается",
     "download": "Скачать",
     "download logs": "Скачать логи",
@@ -1171,6 +1168,7 @@
     "neutral trend": "Стабильно",
     "new": "Новый",
     "new version": "Доступна новая версия {version}!",
+    "next": "Далее",
     "next evaluation date": "Следующая дата оценки",
     "next evaluation date tooltip": "Когда trigger будет оцениваться в следующий раз, на основе его интервала. Не всегда совпадает с датой следующей Ausführung, если условия не выполнены.",
     "next execution date": "Дата следующего выполнения",
@@ -1636,6 +1634,7 @@
     "resumed title": "Возобновить выполнение <code>{id}</code>",
     "reuse original inputs": "Повторное использование оригинальных input",
     "reuse_original_inputs": "Повторно использовать оригинальные inputы",
+    "review your inputs": "Проверьте введённые данные",
     "revision": "Редакция",
     "revision deleted": "Ревизия {revision} была успешно удалена",
     "revisions": "Редакции",

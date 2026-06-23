@@ -1,10 +1,5 @@
 {
   "ja": {
-    "loading": "読み込み中...",
-        "back": "戻る",
-        "next": "次へ",
-        "done": "完了",
-        "review your inputs": "入力内容を確認してください",
     "Add flow": "Flowを追加",
     "Default log level": "デフォルトlogレベル",
     "Default namespace": "デフォルトnamespace",
@@ -83,6 +78,7 @@
     "automatic refresh": "自動更新",
     "avg": "平均",
     "avg duration": "平均実行時間",
+    "back": "戻る",
     "back_to_dashboard": "ダッシュボードに戻る",
     "backfill": "Backfill",
     "backfill executions": "backfill実行",
@@ -497,6 +493,7 @@
       "github": "GitHub issueを開く"
     },
     "documentationMenu": "ドキュメントメニュー",
+    "done": "完了",
     "down trend": "減少",
     "download": "ダウンロード",
     "download logs": "Logsをダウンロード",
@@ -1171,6 +1168,7 @@
     "neutral trend": "安定",
     "new": "新規",
     "new version": "新しいバージョン{version}が利用可能です！",
+    "next": "次へ",
     "next evaluation date": "次の評価日",
     "next evaluation date tooltip": "トリガーが次に評価されるタイミングは、その間隔に基づきます。条件が満たされない場合、次の実行日と常に同じとは限りません。",
     "next execution date": "次の実行日",
@@ -1636,6 +1634,7 @@
     "resumed title": "実行<code>{id}</code>を再開",
     "reuse original inputs": "元のinputを再利用",
     "reuse_original_inputs": "元のinputを再利用",
+    "review your inputs": "入力内容を確認してください",
     "revision": "リビジョン",
     "revision deleted": "リビジョン{revision}が正常に削除されました",
     "revisions": "リビジョン",

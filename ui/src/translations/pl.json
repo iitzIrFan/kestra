@@ -1,10 +1,5 @@
 {
   "pl": {
-    "loading": "Ładowanie...",
-        "back": "Wstecz",
-        "next": "Dalej",
-        "done": "Gotowe",
-        "review your inputs": "Sprawdź swoje dane wejściowe",
     "Add flow": "Dodaj flow",
     "Default log level": "Domyślny poziom log",
     "Default namespace": "Domyślny namespace",
@@ -83,6 +78,7 @@
     "automatic refresh": "Automatyczne odświeżanie",
     "avg": "Średnia",
     "avg duration": "Średni czas trwania wykonania",
+    "back": "Wstecz",
     "back_to_dashboard": "Powrót do pulpitu",
     "backfill": "Backfill",
     "backfill executions": "Backfill wykonania",
@@ -497,6 +493,7 @@
       "github": "Otwórz problem na GitHub"
     },
     "documentationMenu": "Menu dokumentacji",
+    "done": "Gotowe",
     "down trend": "Malejący",
     "download": "Pobierz",
     "download logs": "Pobierz logs",
@@ -1171,6 +1168,7 @@
     "neutral trend": "Stabilny",
     "new": "Nowy",
     "new version": "Nowa wersja {version} dostępna!",
+    "next": "Dalej",
     "next evaluation date": "Data następnej oceny",
     "next evaluation date tooltip": "Gdy trigger zostanie ponownie oceniony, na podstawie jego interwału. Nie zawsze jest to samo co następna data wykonania, jeśli warunki nie są spełnione.",
     "next execution date": "Data następnego wykonania",
@@ -1636,6 +1634,7 @@
     "resumed title": "Wznów wykonanie <code>{id}</code>",
     "reuse original inputs": "Ponownie użyj oryginalnych inputów",
     "reuse_original_inputs": "Ponownie użyj oryginalnych inputów",
+    "review your inputs": "Sprawdź swoje dane wejściowe",
     "revision": "Wersja",
     "revision deleted": "Revision {revision} został pomyślnie usunięty",
     "revisions": "Wersje",

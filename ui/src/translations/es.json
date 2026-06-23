@@ -1,10 +1,5 @@
 {
   "es": {
-    "loading": "Cargando...",
-        "back": "Atrás",
-        "next": "Siguiente",
-        "done": "Hecho",
-        "review your inputs": "Revise sus entradas",
     "Add flow": "Añadir flujo",
     "Default log level": "Nivel de log predeterminado",
     "Default namespace": "Namespace predeterminado",
@@ -83,6 +78,7 @@
     "automatic refresh": "Actualización automática",
     "avg": "Promedio",
     "avg duration": "Duración promedio de ejecución",
+    "back": "Atrás",
     "back_to_dashboard": "Volver al panel de control",
     "backfill": "Backfill",
     "backfill executions": "Ejecuciones de backfill",
@@ -497,6 +493,7 @@
       "github": "Abrir un issue en GitHub"
     },
     "documentationMenu": "Menú de documentación",
+    "done": "Hecho",
     "down trend": "Disminuyendo",
     "download": "Descargar",
     "download logs": "Descargar logs",
@@ -1171,6 +1168,7 @@
     "neutral trend": "Estable",
     "new": "Nuevo",
     "new version": "¡Nueva versión {version} disponible!",
+    "next": "Siguiente",
     "next evaluation date": "Próxima fecha de evaluación",
     "next evaluation date tooltip": "Cuando el trigger se evaluará la próxima vez, basado en su intervalo. No siempre es lo mismo que la próxima fecha de ejecución si no se cumplen las condiciones.",
     "next execution date": "Fecha de próxima ejecución",
@@ -1636,6 +1634,7 @@
     "resumed title": "Reanudar ejecución <code>{id}</code>",
     "reuse original inputs": "Reutilizar inputs originales",
     "reuse_original_inputs": "Reutilizar inputs originales",
+    "review your inputs": "Revise sus entradas",
     "revision": "Revisión",
     "revision deleted": "La revisión {revision} ha sido eliminada con éxito",
     "revisions": "Revisiones",

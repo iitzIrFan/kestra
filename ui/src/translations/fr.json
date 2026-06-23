@@ -1,10 +1,5 @@
 {
   "fr": {
-    "loading": "Chargement...",
-        "back": "Retour",
-        "next": "Suivant",
-        "done": "Terminé",
-        "review your inputs": "Vérifiez vos entrées",
     "Add flow": "Ajouter un flow",
     "Default log level": "Niveau de log par défaut",
     "Default namespace": "Espace de nom par défaut",
@@ -83,6 +78,7 @@
     "automatic refresh": "rafraîchissement automatique",
     "avg": "Moyenne",
     "avg duration": "Durée moyenne d'exécution",
+    "back": "Retour",
     "back_to_dashboard": "Retour au tableau de bord",
     "backfill": "Backfill",
     "backfill executions": "Backfill d'exécutions",
@@ -497,6 +493,7 @@
       "github": "Bugs GitHub"
     },
     "documentationMenu": "Menu de documentation",
+    "done": "Terminé",
     "down trend": "En baisse",
     "download": "Télécharger",
     "download logs": "Télécharger les logs",
@@ -1171,6 +1168,7 @@
     "neutral trend": "Stable",
     "new": "Nouveau",
     "new version": "Nouvelle version {version} disponible!",
+    "next": "Suivant",
     "next evaluation date": "Prochaine date d'évaluation",
     "next evaluation date tooltip": "Quand le trigger sera évalué la prochaine fois, en fonction de son intervalle. Pas toujours identique à la prochaine date d'exécution si les conditions ne sont pas remplies.",
     "next execution date": "Prochaine date d'exécution",
@@ -1636,6 +1634,7 @@
     "resumed title": "Reprendre l'exécution <code>{id}</code>",
     "reuse original inputs": "Réutiliser les inputs d'origine",
     "reuse_original_inputs": "Réutiliser les inputs d'origine",
+    "review your inputs": "Vérifiez vos entrées",
     "revision": "Révision",
     "revision deleted": "La révision {revision} a été supprimée avec succès",
     "revisions": "Révisions",

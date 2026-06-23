@@ -1,10 +1,5 @@
 {
   "de": {
-    "loading": "Wird geladen...",
-        "back": "Zurück",
-        "next": "Weiter",
-        "done": "Fertig",
-        "review your inputs": "Überprüfen Sie Ihre Eingaben",
     "Add flow": "Flow hinzufügen",
     "Default log level": "Standard-Log-Ebene",
     "Default namespace": "Standard-Namespace",
@@ -83,6 +78,7 @@
     "automatic refresh": "Automatische Aktualisierung",
     "avg": "Durchschnitt",
     "avg duration": "Durchschnittliche Ausführungsdauer",
+    "back": "Zurück",
     "back_to_dashboard": "Zurück zum Dashboard",
     "backfill": "Backfill",
     "backfill executions": "Backfill-Ausführungen",
@@ -497,6 +493,7 @@
       "github": "GitHub-Issue öffnen"
     },
     "documentationMenu": "Dokumentationsmenü",
+    "done": "Fertig",
     "down trend": "Sinkend",
     "download": "Herunterladen",
     "download logs": "Logs herunterladen",
@@ -1171,6 +1168,7 @@
     "neutral trend": "Stabil",
     "new": "Neu",
     "new version": "Neue Version {version} verfügbar!",
+    "next": "Weiter",
     "next evaluation date": "Nächstes Bewertungsdatum",
     "next evaluation date tooltip": "Wann der Trigger das nächste Mal basierend auf seinem Intervall ausgewertet wird. Nicht immer dasselbe wie das nächste Ausführungsdatum, wenn Bedingungen nicht erfüllt sind.",
     "next execution date": "Nächstes Ausführungsdatum",
@@ -1636,6 +1634,7 @@
     "resumed title": "Ausführung <code>{id}</code> fortsetzen",
     "reuse original inputs": "Original-Inputs wiederverwenden",
     "reuse_original_inputs": "Ursprüngliche Inputs wiederverwenden",
+    "review your inputs": "Überprüfen Sie Ihre Eingaben",
     "revision": "Revision",
     "revision deleted": "Revision {revision} wurde erfolgreich gelöscht",
     "revisions": "Revisionen",
